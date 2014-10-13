@@ -1,8 +1,6 @@
-# Standards
+# Coding style
 
-This document is best viewed through a markdown parser.
-
-## Coding
+Also see `NAMING`
 
 If in doubt, follow the kernel-style.  The main exception being that the
 open-brace for JavaScript/C# functions should _always_ be on the same line:
@@ -37,7 +35,7 @@ open-brace for JavaScript/C# functions should _always_ be on the same line:
 
  * More than 4 levels of indentation?  You should probably rethink your
  design...  Pull big anonymous functions out and name/document them, separate
- big controller into many small services/directives.........
+ big controller into small services/directives.........
 
  * Line length > 80?  Probably fine for JavaScript/C#, but don't exceed 200, and be worried if you exceed 160...
 
@@ -49,9 +47,7 @@ open-brace for JavaScript/C# functions should _always_ be on the same line:
  you can test each module/object/function as you finish coding them?  This also
  makes it easier for others to help...
 
-## Architecture
-
-### _Do_ hide system features
+## _Do_ hide system features to promote weak-coupling and encapsulation
 
 Use abstraction to hide the implementation from
 the interface so that code is easily portable.  A good example is hiding
@@ -65,7 +61,7 @@ Communication to server APIs should be hidden in services where possible,
 so that if/when APIs change, the front-end code only needs to be updated in one
 place.  This also allows mocking of backends, for test purposes.
 
-### _Do not_ hide language features
+## _Do not_ hide language/framework features or capabilities
 
 If your code is asynchronous and uses a promise, return a proper promise; don't
 hide it behind callback functions.  By exposing a promise, callbacks can add

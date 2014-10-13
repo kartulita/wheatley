@@ -2,7 +2,9 @@
 
 ## api
 
-For talking to the server.  Wraps `$http` and returns promises.
+For talking to the server.
+Wraps `$http` and returns promises.
+Exposes endpoints.
 
 
 ## schema
