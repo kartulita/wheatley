@@ -1,4 +1,4 @@
-(function () {
+(function (angular) {
 'use strict';
 
 	angular.module('apiModule', [])
@@ -11,5 +11,4 @@
 			};
 		});
 
-}());
-
+})(angular);

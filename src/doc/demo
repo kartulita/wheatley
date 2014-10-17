@@ -1,0 +1,44 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+
+declare DEMO="$1"
+
+set -euo pipefail
+
+if [ -z "$DEMO" ]; then
+	echo "No demo specified"
+	exit 1
+fi
+
+declare SOURCE="$DEMO.md"
+declare TARGET="./doc-demos/$DEMO/"
+
+if ! [ -f "$SOURCE" ]; then
+	echo "Demo not found: $DEMO"
+	exit 2
+fi
+
+mkdir -p "$TARGET"
+
+echo "Extracting sources from documentation"
+./md2demo "$TARGET" < "$SOURCE" | sed -E 's/^/ + /g'
+echo ""
+
+declare -a DEPS
+declare DEP
+
+DEPS=( "$DEMO" $(perl -ne 'while (<>) { next unless /^Dependencies:\s+(.*)$/; s/[,\s]\s*/\n/g; print "$1"; last; }' < "$SOURCE") )
+echo "Importing dependencies"
+for DEP in "${DEPS[@]}"; do
+	echo -n " + $DEP... "
+	if ! [ -f "../$DEP/module.js" ]; then
+		echo "Dependency not found!"
+		exit 3
+	fi
+	echo ""
+	cp -Rvt "$TARGET" "../$DEP" | sed -E 's/^/   - /g'
+	echo ""
+done
+
+echo "Done!"

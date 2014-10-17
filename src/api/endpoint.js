@@ -1,4 +1,4 @@
-(function () {
+(function (angular) {
 'use strict';
 
 	/* Defines base endpoint for the API */
@@ -10,4 +10,4 @@
 		return new Endpoint('API base', api_https, [api_domain, api_path]);
 	}
 
-}());
+})(angular);

@@ -1,7 +1,7 @@
-(function () {
+(function (angular) {
 	'use strict';
 
-	angular.module('api', ['utils'])
+	angular.module('api', ['utils']);
 
-}());
+})(angular);
 

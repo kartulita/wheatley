@@ -1,0 +1,126 @@
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Todo</title>
+		<meta name="dependency" content="underscore">
+		<meta name="dependency" content="toastr">
+		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular.min.js"></script>
+		<meta name="dependency" content="angular-mocks">
+		<script src="utils/dependency.js"></script>
+		<script src="utils/module.js"></script>
+		<script src="utils/endpoint.js"></script>
+		<script src="utils/toaster.js"></script>
+		<script src="todo-app.js"></script>
+		<script src="todo-backend.js"></script>
+		<script src="todo-api.js"></script>
+		<script src="todo-service.js"></script>
+		<script src="todo-controller.js"></script>
+		<script src="lists-controller.js"></script>
+		<script src="list-controller.js"></script>
+		<link rel="stylesheet" href="style.css">
+		<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+	</head>
+	<!-- TODO lists application -->
+	<body>
+		<fieldset class="todo-app"
+			ng-app="todoApp"
+			ng-controller="todoController"
+			ng-class="{ disabled: isWorking() }"
+			ng-disabled="isBusy">
+			<!-- List of TODO lists -->
+			<form class="todo-lists" name="todoLists"
+				ng-controller="listsController">
+				<fieldset
+					ng-disabled="!model.lists">
+					<h1>All TODO lists</h1>
+					<div class="toolbar">
+						<input type="button" class="todo-list-new" value="New list"
+							ng-click="methods.newList()">
+						<input type="button" class="todo-list-refresh" value="Refresh"
+							ng-click="methods.refreshLists()">
+					</div>
+					<div class="list-box">
+						<div class="list-item"
+							ng-repeat="list in model.lists"
+							ng-class="{ selected: list === model.selected, transient: list.id === null }"
+							ng-click="methods.openList(list)">
+							<span class="todo-list-name">{{ list.name }}</span>
+						</div>
+					</div>
+				</fieldset>
+			</form>
+			<!-- Selected TODO list -->
+			<form class="todo-list" name="todoList"
+				ng-controller="listController">
+				<fieldset
+					ng-disabled="!model.list">
+					<h1>View/edit TODO list</h1>
+					<div class="toolbar">
+						<input type="button" class="todo-list-item-new" value="New item"
+							ng-disabled="todoList.$invalid"
+							ng-click="methods.newItem()">
+						<input type="button" class="todo-list-save" value="Save list"
+							ng-disabled="todoList.$invalid"
+							ng-click="methods.saveList()">
+						<span class="spacer"></span>
+						<input type="button" class="todo-list-item-delete" value="Delete list"
+							ng-click="methods.deleteList()">
+					</div>
+					<div class="toolbar">
+						<label for="list-name" class="name-label">Name</label>
+						<input type="text" id="list-name" required
+							ng-disabled="!model.list"
+							ng-model="model.list.name">
+					</div>
+					<!-- List of TODO items -->
+					<div class="list-box">
+						<div class="list-item"
+							ng-repeat="item in model.list.items"
+							ng-init="index = $index"
+							ng-class="{ done: item.done, selected: item === model.editingItem }">
+							<!-- Not editing view -->
+							<span
+								ng-hide="item === model.editingItem">
+								<input type="checkbox" class="todo-list-item-is-done"
+									id="{{ 'todo-item-done-' + index }}"
+									ng-model="item.done"
+									ng-blur="methods.saveItem(item)"
+									ng-change="methods.saveItem(item)">
+								<label class="todo-list-item-name"
+									for="{{ 'todo-item-done-' + index }}">
+									<span class="todo-list-item-name-text">{{ item.name }}</span>
+								</label>
+								<span class="buttons">
+									<input type="button" class="todo-list-item-edit" value="Edit"
+										ng-click="methods.editItem(item)">
+									<input type="button" class="todo-list-item-delete" value="Delete"
+										ng-hide="model.editingItem !== null"
+										ng-click="methods.deleteItem(item)">
+								</span>
+							</span>
+							<!-- Editing view -->
+							<span
+								ng-show="item === model.editingItem">
+								<input type="text" class="todo-list-item-name" required
+									ng-model="item.name">
+								<span class="buttons">
+									<input type="button" class="todo-list-item-save" value="Save"
+										ng-click="methods.saveItem(item)">
+								</span>
+							</span>
+						</div>
+					</div>
+				</fieldset>
+			</form>
+			<div>
+				<div class="buttons bottom">
+					<input type="button" class="todo-dump" value="Dump to console"
+						ng-click="methods.dump()">
+				</div>
+			</div>
+		</fieldset>
+	</body>
+</html>
+

@@ -1,3 +1,40 @@
+(function (angular, window) {
+	'use strict';
+
+	angular.module('utils')
+		.factory('toastService', function () {
+			return {
+				success: function (message) {
+					toastr.success(text, 'Success');
+				},
+				error: function (message) {
+					toastr.error(text, 'Error');
+				},
+				info: function (message) {
+					toastr.info(text, 'Info');
+				},
+				warning: function (message) {
+					toastr.info(text, 'Warning');
+				},
+				clear: function () {
+					toastr.clear();
+				}
+			};
+		})
+		.directive('toaster', function () {
+			window.toastr.options = {
+			};
+			return {
+				restrict: 'A',
+				replace: 'false',
+				template:
+					'<script src="//cdnjs.com/libraries/toastr.js"></script>' +
+					'<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" type="text/css" rel="stylesheet">'
+			};
+		})
+		;
+
+})(angular, window);
 (function () {
 	'use strict';
 

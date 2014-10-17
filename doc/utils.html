@@ -1,0 +1,404 @@
+<h1 id="utils">Utils</h1>
+<p>Miscallaneous utilities</p>
+<h2 id="endpoint">Endpoint</h2>
+<p>Wraps the endpoint object in an angular factory. This makes it easier to track<br />where API target are called from, since each API target should be represented<br />by one and only one endpoint object. It also makes it easier to &quot;mount&quot;<br />sub-services within others, by extending endpoints. Switching the entier app<br />from a &quot;test&quot; API server to the &quot;production&quot; API server becomes much easier,<br />since only the API root endpoint needs to be changed.</p>
+<h3 id="todo-app.js">todo-app.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;, [&#39;utils&#39;]);</code></pre>
+<h3 id="todo-api.js">todo-api.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .constant(&#39;live&#39;, false)
+    .constant(&#39;useHttps&#39;, true)
+    .constant(&#39;testServer&#39;, &#39;test.myapp.ee&#39;)
+    .constant(&#39;liveServer&#39;, &#39;myapp.ee&#39;)
+    .constant(&#39;apiPath&#39;, &#39;/api&#39;)
+    .constant(&#39;apiKey&#39;, 42)
+    .factory(&#39;apiEndpoint&#39;, apiEndpoint);
+
+function apiEndpoint(Endpoint, useHttps, apiPath, apiKey, live, testServer, liveServer) {
+    /*
+     * Creates root endpoint from which others extend.
+     * Must include target domain.
+     */
+    return new Endpoint(&#39;Todo API&#39;,
+        useHttps,
+        [live ? liveServer : testServer, apiPath],
+        { apiKey: apiKey });
+}</code></pre>
+<h3 id="todo-service.js">todo-service.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .factory(&#39;todoService&#39;, todoService);
+
+function todoService(apiEndpoint) {
+    var lists = apiEndpoint.extend(&#39;lists&#39;);
+    var list = apiEndpoint.extend(&#39;list&#39;);
+    var workLevel = 0;
+
+    return {
+        lists: apiEndpoint.extend(&#39;/lists&#39;),
+        list: apiEndpoint.extend(&#39;/list&#39;),
+        makeMethod: makeMethod,
+        isWorking: isWorking,
+        getNewList: getNewList
+    };
+
+    /*
+     * Wraps a method so that we can track when it has completed.
+     * This allows us to disable form controls while a method is executing.
+     */
+    function makeMethod(fn) {
+        return function (args) {
+            beginWork();
+            return fn.apply(null, arguments)
+                .finally(endWork);
+        };
+    }
+
+    function isWorking() {
+        return workLevel;
+    }
+
+    function beginWork() {
+        workLevel++;
+    }
+
+    function endWork() {
+        workLevel--;
+    }
+
+    function getNewList() {
+        return {
+            id: null,
+            name: &#39;&#39;,
+            items: []
+        };
+    }
+    
+}</code></pre>
+<h3 id="todo-controller.js">todo-controller.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .controller(&#39;todoController&#39;, todoController)
+    .factory(&#39;busyTrackerInterceptor&#39;, busyTrackerInterceptor)
+    .config(function ($httpProvider) {
+        $httpProvider.interceptors.push(&#39;busyTrackerInterceptor&#39;)
+    })
+    ;
+
+function busyTrackerInterceptor($q, $rootScope) {
+    var requestCount = 0;
+
+    return {
+        request: onRequest,
+        response: onResponse,
+        responseError: onResponseError
+    };
+
+    function requestStarted() {
+        if (requestCount++ === 0) {
+            $rootScope.$broadcast(&#39;busy&#39;, true);
+        }
+    }
+
+    function requestEnded() {
+        if (--requestCount === 0) {
+            $rootScope.$broadcast(&#39;busy&#39;, false);
+        }
+    }
+
+    function onRequest(config) {
+        requestStarted();
+        return config || $q.when(config);
+    }
+
+    function onResponse(response) {
+        requestEnded();
+        return response || $q.when(response);
+    }
+
+    function onResponseError(response) {
+        requestEnded();
+        return $q.reject(response);
+    }
+}
+
+function todoController($scope, $rootScope) {
+    var vm = $scope;
+
+    vm.isBusy = false;
+
+    $rootScope.$on(&#39;busy&#39;, function (event, busy) { vm.isBusy = busy; });
+}</code></pre>
+<h3 id="lists-controller.js">lists-controller.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .controller(&#39;listsController&#39;, listsController);
+
+function listsController($scope, todoService) {
+    var vm = $scope;
+
+    vm.model = {
+        lists: [],
+        selectedList: null
+    };
+
+    vm.methods = {
+        newList: newList,
+        openList: openList,
+        deleteList: deleteList
+    };
+
+    reloadLists()
+        .then(function () {
+            if (vm.model.lists.length) {
+                openList(vm.model.lists[0]);
+            } else {
+                newList();
+            }
+        });
+
+    return;
+
+    function newList() {
+        var list = todoService.getNewList();
+        vm.model.selectedList = list;
+        vm.model.lists.push(list);
+    }
+
+    function openList(list) {
+        if (vm.model.selectedList.id === null) {
+            removeList(vm.model.selectedList);
+        }
+        vm.model.selectedList = list;
+        vm.$parent.$broadcast(&#39;open-list&#39;, list);
+    }
+
+    function findList(id) {
+        var item = vm.model.lists.filter(function (list) {
+            return list.id === id;
+        });
+        return item.length ? item[0] : null;
+    }
+
+    function deleteList(list) {
+        return todoService.del({ id: list.id })
+            .then(function () { removeList(list); });
+    }
+
+    function removeList(list) {
+        if (list === vm.model.selectedList) {
+            newList();
+        }
+        var index = vm.model.lists.indexOf(list);
+        if (index !== -1) {
+            vm.model.lists.splice(index, 1);
+        }
+    }
+
+    function reloadLists() {
+        return todoService.lists.get()
+            .then(function (lists) {
+                var selectedId = vm.selectedList.id;
+                vm.model.lists = lists;
+                var list = findList(selectedId);
+                if (list) {
+                    openList(list);
+                } else {
+                    newList();
+                }
+            });
+    }
+}</code></pre>
+<h3 id="list-controller.js">list-controller.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .controller(&#39;listController&#39;, listController);
+
+function listController($scope, $q, todoService) {
+    var vm = $scope;
+
+    vm.model = {
+        list: null,
+        editingItem: null
+    };
+
+    vm.methods = {
+        editItem: editItem,
+        saveItem: saveItem,
+        deleteItem: deleteItem
+    };
+
+    $rootScope.$on(&#39;open-list&#39;, function (event, list) { setList(list); });
+
+    return;
+
+    function editItem(item) {
+        vm.model.editingItem = item;
+    }
+
+    function saveItem(item) {
+        var promise;
+        if (vm.model.list.id === null) {
+            promise = todoService.list.post(vm.model.list)
+                .then(function (id) {
+                    vm.model.list.id = id;
+                });
+        } else {
+            promise = todoService.list.put(vm.model.list);
+        }
+        return promise.then(function () {
+            vm.model.editingItem = null;
+        });
+    }
+
+    function deleteItem(item) {
+        var index = vm.model.list.indexOf(item);
+        if (index !== -1) {
+            vm.model.list.splice(index, 1);
+        }
+        vm.model.editingItem = null;
+    }
+
+    function setList(list) {
+        vm.model.list = list;
+        vm.model.editingItem = null;
+    }
+}</code></pre>
+<h3 id="index.html">index.html</h3>
+<pre><code>&lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+        &lt;meta charset=&quot;utf-8&quot;&gt;
+        &lt;title&gt;Todo&lt;/title&gt;
+        &lt;!-- Scripts --&gt;
+        &lt;script src=&quot;//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-mocks.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;utils/module.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;utils/endpoint.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;utils/toaster.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;todo-app.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;todo-api.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;todo-service.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;todo-controller.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;lists-controller.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;list-controller.js&quot;&gt;&lt;/script&gt;
+        &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;
+    &lt;/head&gt;
+    &lt;!-- TODO lists application --&gt;
+    &lt;body&gt;
+        &lt;fieldset class=&quot;todo-app&quot;
+            ng-app=&quot;todoApp&quot;
+            ng-controller=&quot;todoController&quot;
+            ng-class=&quot;{ disabled: isWorking() }&quot;
+            ng-disabled=&quot;isBusy&quot;&gt;
+            &lt;h1&gt;All TODO lists&lt;/h1&gt;
+            &lt;!-- List of TODO lists --&gt;
+            &lt;fieldset class=&quot;todo-lists&quot;
+                ng-controller=&quot;listsController&quot;
+                ng-disabled=&quot;!model.lists&quot;&gt;
+                &lt;input type=&quot;button&quot; class=&quot;todo-list-new&quot;
+                    ng-click=&quot;methods.newList()&quot;&gt;
+                &lt;div class=&quot;list-box todo-lists&quot;&gt;
+                    &lt;div class=&quot;list-item todo-list&quot;
+                        ng-repeat=&quot;list in model.lists&quot;
+                        ng-class=&quot;{ selected: list === model.selectedList }&quot;
+                        ng-click=&quot;methods.openList(list)&quot;&gt;
+                        &lt;span class=&quot;todo-list-name&quot;
+                            ng-bind=&quot;list.name&quot;&gt;&lt;/span&gt;
+                        &lt;input type=&quot;button&quot; class=&quot;todo-list-delete&quot;
+                            ng-click=&quot;methods.deleteList(list)&quot;&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/fieldset&gt;
+            &lt;!-- Selected TODO list --&gt;
+            &lt;fieldset class=&quot;todo-list&quot;
+                ng-controller=&quot;listController&quot;
+                ng-disabled=&quot;!model.list&quot;&gt;
+                &lt;h1&gt;View/edit TODO list&lt;/h1&gt;
+                &lt;input type=&quot;button&quot; class=&quot;todo-list-save&quot;
+                    ng-click=&quot;methods.saveList()&quot;&gt;
+                &lt;input type=&quot;button&quot; class=&quot;todo-list-delete&quot;
+                    ng-click=&quot;methods.deleteList()&quot;&gt;
+                &lt;label for=&quot;list-name&quot; class=&quot;name-label&quot;&gt;Name&lt;/label&gt;
+                &lt;input type=&quot;text&quot; id=&quot;list-name&quot; required
+                    ng-model=&quot;model.name&quot;&gt;
+                &lt;!-- List of TODO items --&gt;
+                &lt;div class=&quot;list-box todo-list-items&quot;&gt;
+                    &lt;div class=&quot;list-item todo-list-item&quot;
+                        ng-repeat=&quot;item in model.items&quot;
+                        ng-init=&quot;index = $index&quot;
+                        ng-class=&quot;{ done: item.done }&quot;&gt;
+                        &lt;span
+                            ng-hide=&quot;item === model.editingItem&quot;&gt;
+                            &lt;input type=&quot;checkbox&quot; class=&quot;todo-list-item-is-done&quot;
+                                ng-id=&quot;&#39;item-done-&#39; + index&quot;
+                                ng-model=&quot;item.done&quot;
+                                ng-change=&quot;methods.saveItem(item)&quot;&gt;
+                            &lt;label class=&quot;todo-list-item-name&quot;
+                                ng-for=&quot;&#39;item-done&#39; + index&quot;&gt;
+                                &lt;span class=&quot;todo-list-item-name&quot;
+                                    ng-bind=&quot;item.name&quot;&gt;&lt;/span&gt;
+                            &lt;/label&gt;
+                            &lt;input type=&quot;button&quot; class=&quot;todo-list-item-edit&quot;
+                                ng-click=&quot;methods.editItem(item)&quot;&gt;
+                            &lt;input type=&quot;button&quot; class=&quot;todo-list-item-delete&quot;
+                                ng-hide=&quot;editingItem !== null&quot;
+                                ng-click=&quot;methods.deleteItem(item)&quot;&gt;
+                        &lt;/span&gt;
+                        &lt;span
+                            ng-show=&quot;item === model.editingItem&quot;&gt;
+                            &lt;input type=&quot;text&quot; class=&quot;todo-list-item-name&quot; required
+                                ng-model=&quot;item.name&quot;&gt;
+                            &lt;input type=&quot;button&quot; class=&quot;todo-list-item-save&quot;
+                                ng-click=&quot;methods.saveItem(item)&quot;&gt;
+                        &lt;/span&gt;
+                    &lt;/div&gt;
+                    &lt;div class=&quot;list-item todo-list-item todo-list-item-new&quot;&gt;
+                        &lt;input type=&quot;button&quot; class=&quot;todo-list-new-item&quot;
+                            ng-click=&quot;methods.newItem()&quot;&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/fieldset&gt;
+        &lt;/fieldset&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h3 id="style.css">style.css</h3>
+<pre><code>* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    font-family: sans-serif;
+    font-size: 16px;
+    background: gray;
+}
+
+div,
+fieldset {
+    margin: 10px;
+    border: 1px solid black;
+    border-radius: 10px;
+}
+
+.todo-app {
+    background: silver;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: stretch;
+}
+
+.todo-list {
+    flex-basis: 300px;
+}
+
+.todo-lists {
+    flex-basis: 600px;
+    flex-grow: 1;
+    flex-shrink: 0;
+}
+
+.list-box {
+    overflow-x: auto;
+    overflow-y: scroll;
+}
+
+.list-item {
+    padding: 10px;
+}</code></pre>

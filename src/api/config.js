@@ -1,4 +1,4 @@
-(function () {
+(function (angular) {
 	'use strict';
 
 	angular.module('api')
@@ -6,4 +6,4 @@
 		.constant('api_path', '/')
 		.constant('api_https', false);
 
-}());
+})(angular);
