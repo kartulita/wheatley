@@ -35,14 +35,37 @@
 			.join('&');
 	}
 
+	function parametrizeRoute(route, params) {
+		var paramRx = /(?:\/\:(\w+))(?=\/|$)/g;
+		return route.replace(paramRx, function (all, key) {
+			var value = params[key];
+			if (typeof value === 'undefined') {
+				throw new Error('Failed to parametrize route "' + route +
+					'": parameter "' + key + '" was not specified');
+			}
+			if (value === null) {
+				return '';
+			} else {
+				return '/' + encodeURIComponent(value);
+			}
+		});
+	}
+
 	/* Returns the Endpoint constructor */
 	function EndpointConstructor($http, toastService) {
 
 		Endpoint.prototype = {
 			constructor: Endpoint,
-			/* Returns new endpoint created by appending path */
+			/*
+			 * Returns new endpoint created by appending path
+			 * e.g. creating an endpoint to some API routing by extending the
+			 * API root path.
+			 */
 			extend: extend,
-			/* Returns new endpoint created by extending query */
+			/*
+			 * Returns new endpoint created by extending query options
+			 * e.g. adding an API key or auth token to the root URL for an API.
+			 */
 			query: query,
 			/* Invokes the target and returns a promise */
 			invoke: invoke,
@@ -63,6 +86,7 @@
 			toString: toString
 		};
 
+		/* Hide internals if possible */
 		if (Object.defineProperty) {
 			Object.defineProperty(Endpoint.prototype, 'beginInvoke', { enumerable: false });
 			Object.defineProperty(Endpoint.prototype, 'endInvoke', { enumerable: false });
@@ -139,24 +163,32 @@
 				_({}).extend(this.queryObj, queryObj || {}), this);
 		}
 
-		function invoke(method, params, data, config) {
+		function invoke(method, data, config) {
 			if (typeof method !== 'string') {
 				throw new Error('Method must be a string');
 			}
-			/* Parametrize route */
-			var url = this.baseUrl.replace(/\:(\w+)/, function (all, key) {
-				var value = params[key];
-				if (typeof value === 'undefined') {
-					throw new Error('Endpoint parameter missing: "' + key + '"');
+			data = data || {};
+			/* Route parameters */
+			var params = data.params;
+			/* Query string */
+			var query = data.query;
+			/* Request payload */
+			var body = data.body;
+			if (method.toUpperCase() === 'GET') {
+				if (body) {
+					throw new Error('Request body specified for a GET request');
+				} else {
+					body = undefined;
 				}
-				return encodeURIComponent(value);
-			});
+			}
+			/* URL */
+			var url = parametrizeRoute(this.baseUrl, _({}).defaults(params, body));
 			/* $http config */
 			var fullConfig = {
 				method: method,
 				url: url,
-				params: this.queryObj,
-				data: method.toUpperCase() === 'GET' ? undefined : data
+				params: _({}).extend(this.queryObj, query),
+				data: body
 			};
 			if (config) {
 				_(fullConfig).extend(config);
@@ -178,8 +210,8 @@
 		}
 
 		function invokeMethod(method) {
-			return function (params, data, config) {
-				return this.invoke(method, params, data, config);
+			return function (data, config) {
+				return this.invoke(method, data, config);
 			};
 		}
 

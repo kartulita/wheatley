@@ -2,14 +2,16 @@
 angular.module('todoApp')
 	.run(backend);
 
-function backend($httpBackend, todoService) {
-	var lists = [];
+function backend($httpBackend, $window, rootApi) {
+	var lists;
 
-	var q = '\\?apiKey=42$'
+	var q = '\\?apiKey=42$';
 
-	var dumpRx = new RegExp('^' + todoService.endpoint.path + '/dump' + q);
-	var listRx = new RegExp('^' + todoService.endpoint.path + '/([0-9]+)' + q);
-	var listsRx = new RegExp('^' + todoService.endpoint.path + q);
+	var listsPath = rootApi.path + '/lists';
+
+	var dumpRx = new RegExp('^' + listsPath + '/dump' + q);
+	var listRx = new RegExp('^' + listsPath + '/([0-9]+)' + q);
+	var listsRx = new RegExp('^' + listsPath + q);
 
 	$httpBackend.whenGET(dumpRx)
 		.respond(function () {
@@ -24,6 +26,27 @@ function backend($httpBackend, todoService) {
 	$httpBackend.whenGET(listRx).respond(getList);
 	$httpBackend.whenPUT(listRx).respond(putList);
 	$httpBackend.whenDELETE(listRx).respond(deleteList);
+
+	loadData();
+
+	return;
+
+	function loadData() {
+		var data = $window.localStorage.getItem('todoLists');
+		if (data) {
+			lists = JSON.parse(data);
+		} else {
+			lists = [];
+		}
+	}
+
+	function saveData() {
+		$window.localStorage.setItem('todoLists', JSON.stringify(lists));
+	}
+
+	function dataChanged() {
+		saveData();
+	}
 
 	function getId(url) {
 		var id = listRx.exec(url)[1];
@@ -45,6 +68,7 @@ function backend($httpBackend, todoService) {
 			var id = getNextId();
 			list.id = id;
 			lists.push(list);
+			dataChanged();
 			return [200, { id: id }];
 		}
 	}
@@ -64,6 +88,7 @@ function backend($httpBackend, todoService) {
 		var index = indexOfId(id);
 		if (index !== -1) {
 			lists[index] = list;
+			dataChanged();
 			return [200];
 		} else {
 			return [404];
@@ -75,6 +100,7 @@ function backend($httpBackend, todoService) {
 		var index = indexOfId(id);
 		if (index !== -1) {
 			lists.splice(index, 1);
+			dataChanged();
 			return [200];
 		} else {
 			return [404];

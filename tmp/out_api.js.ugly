@@ -1,1 +1,0 @@
-!function(){"use strict";function t(t,a,n,i){return new t("API base",a,[n,i])}angular.module("api").factory("api_endpoint",t),t.$inject=["Endpoint","api_https","api_domain","api_path"]}(),function(){"use strict";angular.module("api").constant("api_domain","api.err.ee").constant("api_path","/").constant("api_https",!1)}(),function(){"use strict";angular.module("api",["utils"])}();

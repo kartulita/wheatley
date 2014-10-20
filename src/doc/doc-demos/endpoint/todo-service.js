@@ -2,9 +2,8 @@
 angular.module('todoApp')
 	.factory('todoService', todoService);
 
-function todoService($q, $rootScope, apiEndpoint) {
-	var listsApi = apiEndpoint.extend('Lists API', 'lists');
-	var listApi = listsApi.extend('List API', ':id');
+function todoService($q, $rootScope, rootApi) {
+	var api = rootApi.extend('Lists API', 'lists/:id');
 
 	var model = {
 		lists: [],
@@ -14,7 +13,6 @@ function todoService($q, $rootScope, apiEndpoint) {
 	refreshLists();
 
 	return {
-		endpoint: listsApi,
 		model: model,
 		refreshLists: refreshLists,
 		selectList: selectList,
@@ -26,11 +24,11 @@ function todoService($q, $rootScope, apiEndpoint) {
 	};
 
 	function dump() {
-		listsApi.extend('Debug data dump', 'dump').get();
+		api.get({ params: { id: 'dump' } });
 	}
 
 	function refreshLists() {
-		return listsApi.get()
+		return api.get({ params: { id: null } })
 			.then(function (result) {
 				var lists = result.data;
 				var selectedId = model.selected && model.selected.id;
@@ -60,10 +58,17 @@ function todoService($q, $rootScope, apiEndpoint) {
 
 	function saveList() {
 		var list = model.selected;
+		/*
+		 * If the backend decides whether to create or update based on
+		 * whether the id parameter is non-null, then we could just do
+		 * `api.post({ body: list })` if the default new list has a null id
+		 * value.  I have used separate put/post here in order to demonstrate
+		 * each method.
+		 */
 		if (list.id !== null) {
-			return listApi.put({ id: list.id }, list);
+			return api.put({ body: list });
 		} else {
-			return listsApi.post(null, list)
+			return api.post({ body: list })
 				.then(function (result) {
 					list.id = Number(result.data.id);
 				});
@@ -75,7 +80,7 @@ function todoService($q, $rootScope, apiEndpoint) {
 		if (list.id === null) {
 			promise = $q.when();
 		} else {
-			promise = listApi.del({ id: list.id });
+			promise = api.del({ params: { id: list.id } });
 		}
 		return promise
 			.then(function () {

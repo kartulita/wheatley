@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 
-declare DEMO="$1"
+declare DEMO="${1%.*}"
 
 set -euo pipefail
 
@@ -25,12 +25,21 @@ echo "Extracting sources from documentation"
 ./md2demo "$TARGET" < "$SOURCE" | sed -E 's/^/ + /g'
 echo ""
 
-declare -a DEPS
-declare DEP
+# Workaround 
+declare -a DEPS=( '' )
 
-DEPS=( "$DEMO" $(perl -ne 'while (<>) { next unless /^Dependencies:\s+(.*)$/; s/[,\s]\s*/\n/g; print "$1"; last; }' < "$SOURCE") )
+if [ -f "../$DEMO/module.js" ]; then
+	DEPS+=( "$DEMO" )
+fi
+
+DEPS+=( $(perl -ne 'while (<>) { next unless /^Dependencies:\s+(.*)$/; s/^Dependencies:\s+//g; s/[,\s]\s*/\n/g; chomp; print "$_"; }' < "$SOURCE" | sort | uniq) )
+
 echo "Importing dependencies"
+declare DEP
 for DEP in "${DEPS[@]}"; do
+	if [ -z "$DEP" ]; then
+		continue
+	fi
 	echo -n " + $DEP... "
 	if ! [ -f "../$DEP/module.js" ]; then
 		echo "Dependency not found!"

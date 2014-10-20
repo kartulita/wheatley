@@ -6,6 +6,11 @@ angular.module('todoApp')
 		$httpProvider.interceptors.push('busyTrackerInterceptor')
 	});
 
+/*
+ * Could also check isInvoking() on api endpoint, which would probably be
+ * better since requests from other parts of the application would then be
+ * ignored.
+ */
 function busyTrackerInterceptor($q, $rootScope) {
 	var requestCount = 0;
 

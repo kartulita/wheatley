@@ -15,9 +15,9 @@ angular.module('todoApp')
 			server: ''
 		}
 	})
-	.factory('apiEndpoint', apiEndpoint);
+	.factory('rootApi', rootApi);
 
-function apiEndpoint(Endpoint, appConfig) {
+function rootApi(Endpoint, appConfig) {
 	/*
 	 * Creates root endpoint from which others extend.
 	 */
