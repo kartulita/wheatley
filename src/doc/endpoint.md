@@ -33,81 +33,136 @@ and PRODUCTION modes, just by changing the API root URL - or a global boolean
 which is used to choose the API root URL.  Endpoints effectively inherit from
 each other, so rather than having:
 
-	GET https://api.fancy-tech-startup.com/social/user/search?apikey=112358&name=elon+musk
-	GET https://api.fancy-tech-startup.com/social/user/693147?apikey=112358
-	PUT https://api.fancy-tech-startup.com/social/photo/31415926?apikey=112358
-	POST https://api.fancy-tech-startup.com/social/photo
+	GET https://api.fancy-tech-startup.com/social/user/search?commonparam=112358&name=elon+musk
+	GET https://api.fancy-tech-startup.com/social/user/693147?commonparam=112358
+	PUT https://api.fancy-tech-startup.com/social/photo/31415926?commonparam=112358
+	POST https://api.fancy-tech-startup.com/social/photo?commonparam=112358
 
-We can have:
+which looks semi-nice until you realise that the domain needs to be changed (or
+some other common piece of information), we can have:
 
-	/* Define APIs */
-	var apiConfigs = {
-		'test': {
-			https: false,
-			path: 'local-dev-server:49001/api',
-			key: 112358
-		},
-		'live': {
-			https: true,
-			path: 'api.fancy-tech-startup.com',
-			key: 0
-		}
-	};
-	var apiMode = 'test';
-
-	/* Select an API target to use */
-	var apiConfig = apiConfigs[apiMode];
-
-	/* 
-	 * API key is stored in base endpoint, and automatically included in derived
-	 * endpoints
-	 */
-	var api = new Endpoint('API', apiConfig.https, apiConfig.path, { apikey: apiConfig.key });
+	angular.module('myApp', ['utils']);
 	
-	/* API for our social sub-app */
-	var socialApi = api.extend('social API', 'social');
+	angular.module('myApp')
 
-	var userApi = apiRoot.extend('users API', 'user');
-	var photoApi = apiRoot.extend('photos API', 'photo');
+		/* Define API targets */
+		.constant('apiConfigs', {
+			'test': {
+				https: false,
+				path: 'local-dev-server:49001/api',
+				query: { commonparam: 112358 }
+			},
+			'live': {
+				https: true,
+				path: 'api.fancy-tech-startup.com',
+				query: { commonparam: 112358 }
+			}
+		})
 
-	/* Parametrize the route: automatically include the 'id' value in the URL */
-	var users = userApi.extend('user collection', ':id');
-	var userSearch = userApi.extend('user finder', 'search');
+		/* Define which API target to use */
+		.constant('apiMode', 'test')
 
-	var photos = photoApi.extend('photo collection', ':id');
-	var photoSearch = photoApi.extend('photo finder', 'search');
+		/* API config selector */
+		.factory('apiConfig', function (apiConfigs, apiMode) {
+			return apiConfigs[apiMode];
+		})
 
-	/* Queries */
-	userSerach.get({ query: { name: 'elon musk' } });
-	users.get({ params: { id: 693147 } });
+		/* Base endpoint which others extend from */
+		.factory('baseApi', function (Endpoint, apiConfig) {
+			return new Endpoint('base API', apiConfig);
+		})
 
-	/* 
-	 * Rename a photo
-	 * PUT should update target vs. POST which should create a new one.
-	 * The route parameters (:id) are read from the body if they are not found in
-	 * the 'params' parameter.  If they are not found in either, an exception is
-	 * thrown.
-	 */
-	var photoData = { id: 31415926, name: 'Beach party' };
-	photos.put({ body: photoData });
+		/* API for our social app */
+		.factory('socialApi', function (baseApi) {
+			return baseApi.extend('social API', 'social');
+		})
 
-	/* 
-	 * Create a new photo
-	 * ID must be defined in either body or in params, but specify as null since
-	 * we don't have an ID yet.
-	 */
-	var photoData = { id: null, name: 'Dungeon party', photo: fileUploadObj, user: 142857 };
-	photos.post({ body: photoData })
-		.then(function (response) {
-			/* ID of newly created photo is returned from the server */
-			photoData.id = response.data.id;
-		});
+		/* API for users */
+		.factory('userApi', function (socialApi) {
+			return socialApi.extend('user API', 'user')
+		})
+
+		/* API for photos */
+		.factory('photoApi', function (socialApi) {
+			return socialApi.extend('photo API', 'photo')
+		})
+
+		/* Run block to demonstrate generating the previously listed requests */
+		.run(function (userApi, photoApi) {
+			userApi.get({ query: { name: 'elon musk' } }).then(...);
+			userApi.get({ params: { id: 693147 } }).then(...);
+
+			var photoData = { id: 31415926, name: 'Beach party' };
+			photoApi.put({ body: photoData }).then(...);
+
+			var photoData = { name: 'Dungeon party', photo: photoUrl, user: 142857 };
+			photoApi.post({ body: postData })
+				.then(function (response) {
+					photoData.id = response.data.id;
+				})
+				.then(...);
+		})
+
+		/* Let's also demonstrate a $resource-inspired pattern too */
+
+		.factory('searchApiMethod', function () {
+			/*
+			 * Shareable definition for the "search" method which may be added
+			 * to APIs.  By defining common API routines externally, then
+			 * refrencing them in endpoint.defineResource, we may create
+			 * "contracts".  The contract describes the API methods on the
+			 * backend, not the names that the resources expose them as.
+			 */
+			return function (query) {
+				/* `this` is return value of endpoint.defineResource */
+				return this.endpoint.get(
+					{ params: { id: 'search' }, query: query });
+			};
+		})
+
+		.factory('users', function (userApi, searchApiMethod) {
+			return userApi.defineResource(User, { search: searchApiMethod });
+
+			function User(data) {
+				data = data || { name: '', email: '' };
+				this.name = data.name;
+				this.email = data.email;
+			}
+		})
+
+		.factory('photos', function (photoApi, searchApiMethod) {
+			return photoApi.defineResource(User, { search: searchApiMethod });
+
+			function Photo(data) {
+				data = data || { name: '', photo: '/img/default-photo.jpg', user: '' };
+				this.name = data.name;
+				this.photo = data.photo;
+				this.user = data.user;
+			}
+		})
+
+		.run(function (users, photos) {
+			users.search({ name: 'elon musk' }).then(...);
+			users.get({ id: 693147 }).then(...);
+
+			photos.get({ id: 31415926 })
+				.then(function (photo) {
+					photo.name = 'Beach party';
+					return photo.$save();
+				})
+				.then(...);
+
+			var photo = photos.create({ name: 'Dungeon party', photo: photoUrl, user: 142857 });
+			photo.save().then(...);
+		})
+		;
 
 Note that the parametrization does not care which method you are using.  Hence,
 if you want to use POST for both creating and for updating, simply ensure that
-the 'id' given is null for creates and non-null for updates.
+the 'id' given is null/undefined for creates and defined/non-null for updates.
 Using an endpoint with path 'myApi/:id', this will send CREATEs (null id) to
 '/myApi' and UPDATEs (non-null id) to '/myApi/:id'.
+
 If an URL parameter is null, the slash preceeding that parameter is also removed,
 to prevent double/trailing slashes from occuring in the URL.  It is not
 recommended to null-out parameters that occur before the last parameter, as it
@@ -117,17 +172,15 @@ properties of the optional 'body' object which have the same name, when
 generating parametrizing URLs.
 
 We could declare a constant which people append URL fragments to, but this
-requires people to actually read a spec and to follow a standard, both of which
-seem like bad assumptions to make.
+requires people to actually read a spec and to voluntarily follow a standard,
+both of which seem like bad assumptions to make.
 
 I also want services and sub-APIs to be modular and mountable in the front-end,
 similar to the mounting/router design in the `express.js` back-end framework.
 Reusable code => consistency + less maintanance.
 
 Due to this, I decided to create a new class which wraps `$http`, rather than
-extending `$resource`.  This `Endpoint` class can further be modified to
-integrate with a backend API framework, if a decent backend API framework is ever
-implemented.....
+extending `$resource`.
 
 The `endpoint` exposes its parameters via properties.  Using
 `https://api.mydomain.ee/collection/search?meaning=42` as an example, these
@@ -144,28 +197,24 @@ represented by the endpoint can be passed to `$http` and `$resource` if needed.
 
 The path can be parametrized, for example:
 
-	var user = new Endpoint('User API', false, '/api/user/:userId');
+	var userApi = new Endpoint('User API', { path: '/api/user/:userId' });
 
 	var uid = 25;
-	users.get({ userId: uid })
+	userApi.get({ params: { userId: uid } })
 		.success(function (user) {
 			user.country = 'Estonia';
-			users.put({ userId: uid }, user);
+			return userApi.put({ body: user });
 		});
+
+	
 
 Endpoint works a bit like $resource but strictly requires human-readable names
 for endpoints (to aid debugging), and has the extend/query mechanism for growing
-a hierarchy of endpoints (DRY).
+a hierarchy of endpoints without repeating the base path or common parameters.
 
-It currently uses $http internally, but should probably use $resource instead so
-that it doesn't have to duplicate the parametrization logic of $resource.
-
-The automatic toasting on error was the main reason that I developed this class.
-Also, you can use the `isInvoking()` property to determine whether there are any
-active requests on the endpoint or its descendants.
-
-This class would probably be better served as an extension or monkeypatch for
-$resource, but for now lets see how it goes.
+The automatic toasting on error was the main reason that I initially developed
+this class.  Additionally, ou can use the `isInvoking()` property to determine
+whether there are any active requests on the endpoint or its descendants.
 
 ## Demo app (TODO list)
 
@@ -185,7 +234,7 @@ Dependencies: utils
 
 		var q = '\\?apiKey=42$';
 
-		var listsPath = rootApi.path + '/lists';
+		var listsPath = rootApi.baseUrl + '/lists';
 
 		var dumpRx = new RegExp('^' + listsPath + '/dump' + q);
 		var listRx = new RegExp('^' + listsPath + '/([0-9]+)' + q);
@@ -309,39 +358,43 @@ Dependencies: utils
 ### todo-api.js
 
 	angular.module('todoApp')
-		.constant('appConfig', {
-			mode: 'test',
+		.constant('apiMode', 'test')
+		.constant('apiConfigs', {
 			common: {
-				api: '/api',
-				params: { apiKey: 42 }
+				query: { apiKey: 42 }
 			},
 			production: {
-				https: true,
-				server: 'myapp.ee'
+				secure: true,
+				path: 'myapp.ee/api'
 			},
 			test: {
-				https: false,
-				server: ''
+				secure: false,
+				path: 'dev-server:1337/api'
 			}
 		})
+		.factory('apiConfig', apiConfig)
 		.factory('rootApi', rootApi);
+
+	function apiConfig(apiConfigs, apiMode) {
+		return _({}).extend(apiConfigs.common, apiConfigs[apiMode]);
+	}
 	
-	function rootApi(Endpoint, appConfig) {
-		/*
-		 * Creates root endpoint from which others extend.
-		 */
-		var config = _({}).defaults(appConfig[appConfig.mode], appConfig.common);
-		return new Endpoint('Todo API', config.https,
-			[config.server, config.api], config.params);
+	function rootApi(Endpoint, apiConfig) {
+		/* Creates root endpoint from which others extend */
+		return new Endpoint('Todo API', apiConfig);
 	}
 
 ### todo-service.js
 
 	angular.module('todoApp')
+		.factory('todoApi', todoApi)
 		.factory('todoService', todoService);
 
-	function todoService($q, $rootScope, rootApi) {
-		var api = rootApi.extend('Lists API', 'lists/:id');
+	function todoApi(rootApi) {
+		return rootApi.extend('Lists API', 'lists/:id');
+	}
+
+	function todoService($q, $rootScope, todoApi) {
 
 		var model = {
 			lists: [],
@@ -362,11 +415,11 @@ Dependencies: utils
 		};
 
 		function dump() {
-			api.get({ params: { id: 'dump' } });
+			todoApi.get({ params: { id: 'dump' } });
 		}
 
 		function refreshLists() {
-			return api.get({ params: { id: null } })
+			return todoApi.get({ params: { id: null } })
 				.then(function (result) {
 					var lists = result.data;
 					var selectedId = model.selected && model.selected.id;
@@ -399,14 +452,14 @@ Dependencies: utils
 			/*
 			 * If the backend decides whether to create or update based on
 			 * whether the id parameter is non-null, then we could just do
-			 * `api.post({ body: list })` if the default new list has a null id
+			 * `todoApi.post({ body: list })` if the default new list has a null id
 			 * value.  I have used separate put/post here in order to demonstrate
 			 * each method.
 			 */
 			if (list.id !== null) {
-				return api.put({ body: list });
+				return todoApi.put({ body: list });
 			} else {
-				return api.post({ body: list })
+				return todoApi.post({ body: list })
 					.then(function (result) {
 						list.id = Number(result.data.id);
 					});
@@ -418,7 +471,7 @@ Dependencies: utils
 			if (list.id === null) {
 				promise = $q.when();
 			} else {
-				promise = api.del({ params: { id: list.id } });
+				promise = todoApi.del({ params: { id: list.id } });
 			}
 			return promise
 				.then(function () {

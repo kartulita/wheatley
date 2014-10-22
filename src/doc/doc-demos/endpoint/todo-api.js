@@ -1,28 +1,28 @@
 
 angular.module('todoApp')
-	.constant('appConfig', {
-		mode: 'test',
+	.constant('apiMode', 'test')
+	.constant('apiConfigs', {
 		common: {
-			api: '/api',
-			params: { apiKey: 42 }
+			query: { apiKey: 42 }
 		},
 		production: {
-			https: true,
-			server: 'myapp.ee'
+			secure: true,
+			path: 'myapp.ee/api'
 		},
 		test: {
-			https: false,
-			server: ''
+			secure: false,
+			path: 'dev-server:1337/api'
 		}
 	})
+	.factory('apiConfig', apiConfig)
 	.factory('rootApi', rootApi);
 
-function rootApi(Endpoint, appConfig) {
-	/*
-	 * Creates root endpoint from which others extend.
-	 */
-	var config = _({}).defaults(appConfig[appConfig.mode], appConfig.common);
-	return new Endpoint('Todo API', config.https,
-		[config.server, config.api], config.params);
+function apiConfig(apiConfigs, apiMode) {
+	return _({}).extend(apiConfigs.common, apiConfigs[apiMode]);
+}
+
+function rootApi(Endpoint, apiConfig) {
+	/* Creates root endpoint from which others extend */
+	return new Endpoint('Todo API', apiConfig);
 }
 

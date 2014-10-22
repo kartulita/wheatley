@@ -7,7 +7,7 @@ function backend($httpBackend, $window, rootApi) {
 
 	var q = '\\?apiKey=42$';
 
-	var listsPath = rootApi.path + '/lists';
+	var listsPath = rootApi.baseUrl + '/lists';
 
 	var dumpRx = new RegExp('^' + listsPath + '/dump' + q);
 	var listRx = new RegExp('^' + listsPath + '/([0-9]+)' + q);

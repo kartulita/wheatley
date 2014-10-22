@@ -1,0 +1,9 @@
+See:
+
+http://kirkbushell.me/angular-js-using-ng-resource-in-a-more-restful-manner/
+
+Simplify Endpoint considerably and make it RESTful in that sense.  So it should
+still use POST and PUT separately (unlike $resource), but allow it to accept and
+expose a $resource style prototype/constructor for resources, with a 'save'
+method that automatically calls post/put as needed and stores back the ID of the
+new item as received from the backend.
