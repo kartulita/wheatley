@@ -1,13 +1,16 @@
 // Do not use this in production
 (function (document) {
-	'definitely do not use strict'; // evil eval used for JS loader
+	'definitely not using strict!'; // evil eval used for JS loader
 	
 	// Lazy way to load dependencies when testing:
 	// <meta name="dependency" content="underscore">
+	// <meta name="dependency" content="jquery">
+	// <meta name="dependency" content="angular">
+	// <meta name="dependency" content="angular-moment">
 	
 	// This library is:
-	//   Insecure (executes foreign JS in current domain)
-	//   Slow (no pipelining for scripts)
+	//   Insecure (executes foreign JS in current domain context)
+	//   Slow (synchronous, no pipelining for scripts)
 	//   Hacky (look at it!)
 	//
 	// It's basically a Microsoft product without the Microsoft.
