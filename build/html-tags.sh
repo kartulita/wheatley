@@ -8,6 +8,7 @@ set -euo pipefail
 declare QUIET=0
 if (( $# > 0 )) && [ "$1" == "-q" ]; then
 	QUIET=1
+	shift
 fi
 
 declare OUT="$1"
@@ -20,7 +21,7 @@ if (( !${#SOURCES} )); then
 	exit 1
 fi
 
-if [[ "${SOURCES[0]}" =~ \.js$ ]]; then
+if [[ "$OUT" =~ \.js$ ]]; then
 	echo "Specified output file has '.js' extension, you probably don't want me to overwrite that file"
 	exit 2
 fi
