@@ -33,7 +33,8 @@ RMDIR=rmdir --ignore-fail-on-non-empty --
 SHELL=bash
 .SHELLFLAGS=-euo pipefail -c
 
-.PHONY: all bundle modules docs clean deps npm_deps tags syntax test $(NODE_DEPS:%=npm_%)
+.PHONY: all bundle modules docs clean deps npm_deps tags syntax test test-loop \
+	$(NODE_DEPS:%=npm_%)
 
 all: bundle modules docs tags
 	@true
@@ -53,11 +54,14 @@ deps: | $(NODE_DEPS:%=npm_%)
 syntax:
 	@build/syntax.sh $(SOURCES)
 
-syntaxloop:
-	@build/syntax.sh --loop $(SOURCES)
+syntax-loop:
+	@build/syntax.sh --loop $(SOURCES) || true
 
 test:
-	@src/test.sh
+	@build/test.sh
+
+test-loop:
+	@build/test.sh --loop || true
 
 clean:
 	$(RMF) $(OUTDIR)/*.js $(TMPDIR)/* $(TAGS:%=$(TAGDIR)/%.html) $(DOCS)

@@ -26,8 +26,7 @@ function syntaxCheck {
 	for SOURCE in "${SOURCES[@]}"; do
 		echo -e "\e[1;32m * Checking \e[0m$SOURCE"
 		if ! (check "$SOURCE" | fmtOut); then
-			echo -e "\e[1;31m   - Failed: \e[0;37m$SOURCE"
-			echo ""
+			echo -e "   - \e[1;31mFailed: \e[0;37m$SOURCE"
 		fi
 	done
 	echo -e "\e[1mSyntax check complete\e[0m"
