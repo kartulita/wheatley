@@ -4,6 +4,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+declare PORT=1337
+
 #declare DIR="$(mktemp -d)"
 declare DIR="/tmp/frontend-tests"
 
@@ -28,8 +30,20 @@ declare -a EXTERNALS=(
 
 # For sources: module/file-name.js => module_file-name.js
 function makeFileName {
-	local SRC="$1" FILE="$(basename "$SRC")" DIR="$(basename "$(dirname "$SRC")")"
-	echo -n "${DIR}_$FILE"
+	local FILENAME="$1"
+	echo -n "$(basename "$(dirname "$FILENAME")")_$(basename "$FILENAME")"
+}
+
+function section {
+	echo -e "\e[1;35m$@\e[0;37m"
+}
+
+function item {
+	echo -e " - \e[0;36m$@\e[0;37m"
+}
+
+function extra {
+	echo -e "   \e[0;33m$@\e[0;37m"
 }
 
 # HTML source
@@ -45,54 +59,113 @@ declare HTMLBODY=(
 	'<div id="fixtures"></div>'
 )
 
-declare FILENAME
+function dependencies {
+	local FILENAME
+	section 'Dependencies'
+	mkdir -p "$DIR/dep"
+	for EXT in "${EXTERNALS[@]}"; do
+		FILENAME="dep/$(basename "$EXT")"
+		item "$FILENAME"
+		if ! [ -e "$DIR/$FILENAME" ]; then
+			extra "Downloading..."
+			wget "$EXT" -O "$DIR/$FILENAME" --progress=none
+		fi
+		if [[ "$FILENAME" =~ \.css$ ]]; then
+			HTMLHEAD+=( '<link rel="stylesheet" href="'"$FILENAME"'">' )
+		fi
+		if [[ "$FILENAME" =~ \.js$ ]]; then
+			HTMLBODY+=( '<script src="'"$FILENAME"'"></script>' )
+		fi
+	done
+}
 
-# Dependencies
-mkdir -p "$DIR/dep"
-for EXT in "${EXTERNALS[@]}"; do
-	FILENAME="dep/$(basename "$EXT")"
-	if ! [ -e "$DIR/$FILENAME" ]; then
-		wget "$EXT" -O "$DIR/$FILENAME" --progress=dot
-	fi
-	if [[ "$FILENAME" =~ \.css$ ]]; then
-		HTMLHEAD+=( '<link rel="stylesheet" href="'"$FILENAME"'">' )
-	fi
-	if [[ "$FILENAME" =~ \.js$ ]]; then
+function modules {
+	local FILENAME
+	section "Module headers"
+	mkdir -p "$DIR/src"
+	for SRC in "${FILES[@]}"; do
+		if ! [[ "$SRC" =~ module\.js$ ]]; then
+			continue
+		fi
+		FILENAME="src/$(makeFileName "$SRC")"
+		item "$FILENAME"
+		cp "$SRC" "$DIR/$FILENAME"
 		HTMLBODY+=( '<script src="'"$FILENAME"'"></script>' )
-	fi
-done
+	done
+	HTMLBODY+=( "<script>mocha.setup('bdd');</script>" )
+}
 
-# Sources
-mkdir -p "$DIR/src"
-for SRC in "${FILES[@]}"; do
-	FILENAME="src/$(makeFileName "$SRC")"
-	cp "$SRC" "$DIR/$FILENAME"
-	HTMLBODY+=( '<script src="'"$FILENAME"'"></script>' )
-done
-HTMLBODY+=( "<script>mocha.setup('bdd');</script>" )
+function sources {
+	local FILENAME
+	section "Sources"
+	mkdir -p "$DIR/src"
+	for SRC in "${FILES[@]}"; do
+		if [[ "$SRC" =~ module\.js$ ]]; then
+			continue
+		fi
+		FILENAME="src/$(makeFileName "$SRC")"
+		item "$FILENAME"
+		cp "$SRC" "$DIR/$FILENAME"
+		HTMLBODY+=( '<script src="'"$FILENAME"'"></script>' )
+	done
+	HTMLBODY+=( "<script>mocha.setup('bdd');</script>" )
+}
 
-# Tests
-mkdir -p "$DIR/test"
-for TEST in "${TESTS[@]}"; do
-	FILENAME="test/$(makeFileName "$(echo "$SRC" | sed -E 's/\//_/g')")"
-	cp "$TEST" "$DIR/$FILENAME"
-	HTMLBODY+=( '<script src="'"$FILENAME"'"></script>' )
-done
-HTMLBODY+=( '<script>mocha.run();</script>' )
+function tests {
+	local FILENAME
+	section "Tests"
+	mkdir -p "$DIR/test"
+	for TEST in "${TESTS[@]}"; do
+		FILENAME="test/$(makeFileName "$(echo "$TEST" | sed -r 'y/\//_/')" | sed -r 's/\._//g')"
+		item "$FILENAME"
+		cp "$TEST" "$DIR/$FILENAME"
+		HTMLBODY+=( '<script src="'"$FILENAME"'"></script>' )
+	done
+	HTMLBODY+=( '<script>mocha.run();</script>' )
+}
 
-# Generate HTML page
-IFS=$'\n' cat > "$DIR/index.html" <<EOF
-<!DOCTYPE html>
-<html>
-<head>
+function html {
+	local FILENAME
+	section "Html interface"
+	FILENAME="index.html"
+	item "$DIR/$FILENAME"
+	IFS=$'\n' cat > "$DIR/$FILENAME" <<EOF
+	<!DOCTYPE html>
+	<html>
+	<head>
 	${HTMLHEAD[@]}
-</head>
-<body>
+	</head>
+	<body>
 	${HTMLBODY[@]}
-</body>
-</html>
+	</body>
+	</html>
 EOF
+}
 
-# Launch server
-cd "$DIR"
-python2 -m SimpleHTTPServer 1337
+declare PYPID=0
+
+function startServer {
+	section "Server"
+	cd "$DIR"
+	python2 -m SimpleHTTPServer $PORT >/dev/null 2>/dev/null & PYPID=$!
+	item "Listening on port $PORT"
+}
+
+function stopServer {
+	item "Stopping server"
+	kill $PYPID
+	item "Server stopped"
+}
+
+function main {
+	dependencies
+	modules
+	sources
+	tests
+	html
+	startServer
+	trap stopServer EXIT
+	wait
+}
+
+main
