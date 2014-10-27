@@ -1,7 +1,7 @@
 (function (angular) {
 'use strict';
 
-	angular.module('apiModule', [])
+	angular.module('schema')
 		.factory('schemaService', function (apiEndpoint) {
 			var endpoint = apiEndpoint.extend('schema service', '/schema');
 			return {

@@ -1,7 +1,7 @@
 (function (angular) {
 'use strict';
 
-	angular.module('apiModule')
+	angular.module('autoform')
 		.factory('autoformService', function (schemaService, fieldsetBuilder, formDecorator) {
 			/* Gets a schema and uses it to render a form */
 			function makeAutoform(schemaName, onSave, model) {
