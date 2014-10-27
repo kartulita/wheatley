@@ -5,7 +5,7 @@
 		.factory('toastr', function ($window) {
 			var toastr = $window.toastr;
 			if (!toastr) {
-				throw new Exception('Toastr not found');
+				throw new Error('Toastr not found');
 			}
 			return toastr;
 		})

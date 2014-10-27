@@ -4,4 +4,3 @@
 	angular.module('api', ['utils']);
 
 })(angular);
-

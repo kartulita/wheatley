@@ -1,5 +1,5 @@
-// Do not use this in production
 (function (document) {
+	// Do not use this in production
 	'definitely not using strict!'; // evil eval used for JS loader
 	
 	// Lazy way to load dependencies when testing:

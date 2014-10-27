@@ -12,10 +12,21 @@
 	angular.module('utils')
 		.factory('Endpoint', EndpointFactory);
 
-	var urlProtocolRx = /^(\w+?):\/\//;
-	var urlSameProtocolRx = /^\/\//;
+	var urlProtocolRx = /^(?:(\w+?):|(?=.))\/\//;
 	var multiSlashRx = /\/{2,}/g;
 	var routeParamRx = /(?:\/\:(\w+))(?=\/|$)/g;
+
+	/*
+	 * Returns first capture from applying regex to string, or a default value.
+	 * Returns empty string for an empty (but successful) match.
+	 */
+	function getCapture(rx, str, default_) {
+		var matches = str.match(rx);
+		return (matches && matches.length > 1) ?
+					_.isUndefined(matches[1]) ? '' :
+					matches[1] :
+					default_;
+	}
 
 	/*
 	 * Mercilessly copied from angular-resource, this is more RFC-compliant
@@ -47,7 +58,7 @@
 	 */
 	function convertObjectToQueryString(query) {
 		return _(query)
-			.each(function (val, key) {
+			.map(function (val, key) {
 				if (val === null) {
 					val = '';
 				} else if (val instanceof Date) {
@@ -82,7 +93,7 @@
 	/*
 	 * Convert an array of strings (and of other string arrays) to a path,
 	 * by flattening the array and joining with slashes.
-	 * Remove double-slashes.
+	 * Remove protocol and reduces double-slashes.
 	 */
 	function processPath(path) {
 		if (_.isNull(path) || _.isUndefined(path)) {
@@ -99,40 +110,50 @@
 		if (path.length === 0) {
 			throw new Error('No path specified for endpoint "' + name + '"');
 		}
-		var sameProtocol = urlSameProtocolRx.test(urlSameProtocolRx);
-		path = (sameProtocol ? '/' : '') + path.replace(multiSlashRx, '/');
+		/* Strip protocol from path */
+		path = path.replace(urlProtocolRx, '');
+		/* Reduce consecutive slashes to one */
+		path = path.replace(multiSlashRx, '/');
 		return path;
 	}
 
 	/*
 	 * Determine which protocol has been requested, via the three different ways
-	 * that the protocol may be specified
+	 * that the protocol may be specified.
 	 */
-	function processProtocol(path, protoString, secure) {
-		var protoUrl = (protoUrl = path.match(urlProtocolRx)) ? protoUrl[1] :
-			urlSameProtocolRx.test(path) ? '' : null;
-		var protoOpt = protoString ? String(protoString) : null;
+	function processProtocol(options) {
+		var path = options.path;
+		var protoString = options.protocol;
+		var secure = options.secure;
+		var protoUrl = getCapture(urlProtocolRx, path, null);
+		var protoOpt = _.isUndefined(protoString) ? null : String(protoString);
 		var protoSec = _.isUndefined(secure) ? null : secure ? 'https' : 'http';
-		var protocol = ([protoUrl, protoOpt, protoSec]
+		var protocol = [protoUrl, protoOpt, protoSec]
 			.reduce(function (protocol, test) {
 				return (protocol === null && test !== null) ? test : protocol;
-			}, null)
-		);
+			}, null);
+		if (protocol === null) {
+			return protocol;
+		}
 		var protoNeq = function (proto) {
-			return proto !== null && protocol.toUpperCase() !== proto.toUpperCase();
+			return proto !== null &&
+				protocol.toUpperCase() !== proto.toUpperCase();
 		};
 		if (protoNeq(protoOpt) || protoNeq(protoSec)) {
 			throw new Error('Protocols specified in options.path / ' +
 				'options.protocol / options.secure are inconsistent: ' +
 				[protoUrl, protoOpt, protoSec]
-					.map(function (s) { return s === null ? '(none)' : s.toUpperCase(); })
+					.map(function (s) {
+						return s === null ? '(none)' :
+							'"' + s.toUpperCase() + '"';
+					})
 					.join(', '));
 		}
 		return protocol;
 	}
 
 	/* Returns the Endpoint constructor */
-	function EndpointFactory($http, toastService) {
+	function EndpointFactory($http, $q, toastService) {
 
 		Endpoint.prototype = {
 			constructor: Endpoint,
@@ -147,6 +168,11 @@
 			 * e.g. adding an API key or auth token to the root URL for an API.
 			 */
 			query: query,
+			/*
+			 * Returns a new endpoint created by setting the value of a parameter
+			 * in this endpoint.
+			 */
+			param: param,
 			/* Invokes the target and returns a promise */
 			invoke: invoke,
 			/* Is this endpoint (or a child of it) being invoked? */
@@ -181,34 +207,42 @@
 			if (!options) {
 				throw new Error('Required parameter missing for Endpoint(name, options)');
 			}
+			/* Set missing options to those of parent if parent is specified */
+			if (parent) {
+				options = _({}).defaults(options,
+					{
+						protocol: parent.protocol,
+						path: parent.path,
+						query: parent.query,
+						params: parent.params
+					});
+			}
 			if (typeof options === 'string') {
 				options = {
 					path: options
 				};
 			}
+			/* Protocol */
+			var protocol = processProtocol(options);
+			var noProtocol = protocol === null;
+			var sameProtocol = protocol === '';
 			/* Path */
 			var path = processPath(options.path);
-			/* Protocol */
-			var protocol = processProtocol(path, options.protocol, options.secure);
-			var secure = protocol.toUpperCase() === 'HTTPS';
-			/* Strip protocol from path */
-			if (path.toUpperCase().substr(0, protocol.length + 3) === protocol.toUpperCase() + '://') {
-				path = path.substr(protocol.length + 3);
-			} else if (protocol === null && urlSameProtocolRx.test(path)) {
-				path = path.substr(2);
-			}
+			var secure = !noProtocol && protocol.toUpperCase() === 'HTTPS';
 			/* Is path domainless? If yes, is it relative or absolute? */
 			var relativePath = path.charAt(0) === '.';
 			var absolutePath = path.charAt(0) === '/';
 			var domainless = relativePath || absolutePath;
-			if (protocol !== null && domainless) {
+			if (!noProtocol && domainless) {
 				throw new Error('Domain must be specified if protocol is ' +
-					'specified.  protocol="' + protocol + '", path="' + path +
+					'non-null.  protocol="' + protocol + '", path="' + path +
 					'"');
 			}
 			/* Query */
 			var queryObject = Object.freeze(_.clone(options.query || {}));
 			var queryString = convertObjectToQueryString(queryObject);
+			/* Params */
+			var paramObject = Object.freeze(_.clone(options.params || {}));
 			/* Error handler */
 			var errorHandler = !options.errorHandler ? defaultErrorHandler :
 				(function (self, errorHandler) {
@@ -230,8 +264,9 @@
 			this.path = path;
 			this.query = queryObject;
 			this.queryString = queryString;
+			this.params = paramObject;
 			/* Base URL (no query string) */
-			this.baseUrl = (protocol === null ? '' : protocol === '' ? '//' : protocol + '://') + path;
+			this.baseUrl = (noProtocol ? '' : sameProtocol ? '//' : protocol + '://') + path;
 			/* Full URL (with query string) */
 			this.url = this.baseUrl + (queryString.length ? '?' + queryString : '');
 			/* Parent endpoint */
@@ -246,30 +281,31 @@
 
 		function extend(name, path) {
 			var self = this;
-			if (arguments.length !== 2) {
-				throw new Error('Wrong number of parameters for ' +
-					'endpoint.extend.  Did you forget to name the endpoint?');
+			if (arguments.length === 1) {
+				path = name, name = self.name;
 			}
-			return new Endpoint(name,
-				{
-					protocol: self.protocol,
-					path: [self.path, path],
-					query: self.query
-				}, self);
+			var newPath = [self.path, path];
+			return new Endpoint(name, { path: newPath }, self);
 		}
 
-		function query(name, query) {
+		function param(name, key, value) {
 			var self = this;
-			if (arguments.length !== 2) {
-				throw new Error('Wrong number of parameters for ' +
-					'endpoint.query.  Did you forget to name the endpoint?');
+			if (arguments.length === 2) {
+				value = key, key = name, name = self.name;
 			}
-			return new Endpoint(name,
-				{
-					protocol: self.protocol,
-					path: self.path,
-					query: _({}).extend(self.queryObj, query)
-				}, self);
+			var newParam = {};
+			newParam[key] = value;
+			var newParams = _({}).extend(self.params, newParam);
+			return new Endpoint(name, { params: newParams }, self);
+		}
+
+		function query(name, queryObj) {
+			var self = this;
+			if (arguments.length === 1) {
+				queryObj = name, name = self.name;
+			}
+			var newQuery = _({}).extend(self.queryObj, queryObj);
+			return new Endpoint(name, { query: newQuery }, self);
 		}
 
 		function defaultErrorHandler(error) {
@@ -289,7 +325,7 @@
 			}
 			data = data || {};
 			/* Route parameters */
-			var params = data.params;
+			var params = _({}).defaults(data.params, self.params);
 			/* Query string */
 			var query = data.query;
 			/* Request payload */
@@ -429,7 +465,11 @@
 				$isNew: true,
 				$deleted: false
 			};
-			_(Constructor.prototype).extend(itemMethods);
+			if (extraMethods) {
+				_(itemMethods).extend(extraMethods);
+			}
+			itemMethods.prototype = Constructor.prototype;
+			Constructor.prototype = itemMethods;
 			if (Object.defineProperty) {
 				/* Hide extra instance methods if possible */
 				for (var prop in itemMethods) {
@@ -465,9 +505,11 @@
 			}
 
 			function read(params) {
-				return endpoint.get(params)
+				return endpoint.get({ params: params })
 					.then(function (res) {
-						return new Constructor(res.data, res);
+						var item = new Constructor(res.data, res);
+						item.$isNew = false;
+						return item;
 					});
 			}
 
@@ -490,11 +532,20 @@
 				}
 				/* Update */
 				function doUpdate() {
+					if (item.$deleted) {
+						throw new Error('Attempted to save an itel that has ' +
+							'been deleted');
+					}
+					var saveItem = _(item)
+						.omit(function (v, k) { return k.charAt(0) === '$'; });
 					if (item.$isNew) {
-						return endpoint.post(item)
-							.then(function () { item.$isNew = false; });
+						return endpoint.post({ body: saveItem })
+							.then(function (res) {
+								item.$isNew = false;
+								return res;
+							});
 					} else {
-						return endpoint.put(item);
+						return endpoint.put({ body: saveItem });
 					}
 				}
 				/* Optional post-update */
@@ -510,7 +561,7 @@
 			}
 
 			function remove(item) {
-				return endpoint.delete(item)
+				return endpoint.delete({ body: item })
 					.then(function () {
 						item.$deleted = true;
 						return Object.freeze(item);
