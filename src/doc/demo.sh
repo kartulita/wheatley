@@ -22,7 +22,7 @@ fi
 mkdir -p "$TARGET"
 
 echo "Extracting sources from documentation"
-./md2demo "$TARGET" < "$SOURCE" | sed -E 's/^/ + /g'
+./md2demo.pl "$TARGET" < "$SOURCE" | sed -E 's/^/ + /g'
 echo ""
 
 # Workaround 

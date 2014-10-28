@@ -116,7 +116,10 @@ some other common piece of information), we can have:
 			return function (query) {
 				/* `this` is return value of endpoint.defineResource */
 				return this.endpoint.get(
-					{ params: { id: 'search' }, query: query });
+					{
+						params: { id: 'search' },
+						query: query
+					});
 			};
 		})
 
@@ -161,7 +164,8 @@ Note that the parametrization does not care which method you are using.  Hence,
 if you want to use POST for both creating and for updating, simply ensure that
 the 'id' given is null/undefined for creates and defined/non-null for updates.
 Using an endpoint with path 'myApi/:id', this will send CREATEs (null id) to
-'/myApi' and UPDATEs (non-null id) to '/myApi/:id'.
+'/myApi' and UPDATEs (non-null id) to '/myApi/:id'.  The Resource approach will
+always use POST for create and PUT for update.
 
 If an URL parameter is null, the slash preceeding that parameter is also removed,
 to prevent double/trailing slashes from occuring in the URL.  It is not

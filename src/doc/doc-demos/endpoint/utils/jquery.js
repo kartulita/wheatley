@@ -5,9 +5,10 @@
 		.factory('$', function ($window) {
 			var jquery = $window.$;
 			if (!jquery) {
-				throw new Error('Jquery not found');
+				return function () {
+					throw new Error('Jquery not found');
+				};
 			}
-			console.warn('WARN: Jquery referenced from Angularjs app');
 			return jquery;
 		});
 

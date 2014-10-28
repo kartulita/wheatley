@@ -10,49 +10,150 @@
 	 * Automatically toasts an error if a request fails.
 	 */
 	angular.module('utils')
-		.factory('Endpoint', EndpointConstructor);
+		.factory('Endpoint', EndpointFactory);
 
-	/* Remove leading/trailing/double slashes */
-	function cleanPath(path) {
-		return path.replace(/(^\/+|\/+$)/g, '').replace(/\/{2,}/g, '/');
+	var urlProtocolRx = /^(?:(\w+?):|(?=.))\/\//;
+	var multiSlashRx = /\/{2,}/g;
+	var routeParamRx = /(?:\/\:(\w+))(?=\/|$)/g;
+
+	/*
+	 * Returns first capture from applying regex to string, or a default value.
+	 * Returns empty string for an empty (but successful) match.
+	 */
+	function getCapture(rx, str, default_) {
+		var matches = str.match(rx);
+		return (matches && matches.length > 1) ?
+					_.isUndefined(matches[1]) ? '' :
+					matches[1] :
+					default_;
 	}
 
 	/*
-	 * Query key/value object to URL query string
+	 * Mercilessly copied from angular-resource, this is more RFC-compliant
+	 * than the JS encodeURIComponent function.  This encodes the URI path.
 	 */
-	function queryToString(query) {
-		return _(query).pairs()
-			.map(function (pair) {
-				var key = pair[0], val = pair[1];
+	function encodeURIQueryField(val, spacesAsHex) {
+		return encodeURIComponent(val)
+			.replace(/%40/g, '@')
+			.replace(/%3A/gi, ':')
+			.replace(/%24/g, '$')
+			.replace(/%3C/gi, ',')
+			.replace(/%20/g, spacesAsHex ? '%20' : '+');
+	}
+
+	/*
+	 * Mercilessly copied from angular-resource, this is more RFC-compliant
+	 * than the JS encodeURIComponent function.  This encodes the URI query key
+	 * names and values.
+	 */
+	function encodeURIPathSegment(val) {
+		return encodeURIQueryField(val, true)
+			.replace(/%26/g, '&')
+			.replace(/%3D/gi, '=')
+			.replace(/%2B/gi, '+');
+	}
+
+	/*
+	 * Convert key/value object to URL query string
+	 */
+	function convertObjectToQueryString(query) {
+		return _(query)
+			.map(function (val, key) {
 				if (val === null) {
 					val = '';
+				} else if (val instanceof Date) {
+					val = val.toISOString();
 				} else if (val.toString === {}.toString) {
 					throw new Error('Attempted to pass object as URI query parameter, ' +
 						'but object does not implement toString');
 				}
-				return encodeURIComponent(key) + '=' + encodeURIComponent(val);
+				return encodeURIQueryField(key) + '=' + encodeURIQueryField(val);
 			})
 			.join('&');
 	}
 
+	/*
+	 * Replace parametrized parts of route with values
+	 */
 	function parametrizeRoute(route, params) {
-		var paramRx = /(?:\/\:(\w+))(?=\/|$)/g;
-		return route.replace(paramRx, function (all, key) {
+		return route.replace(routeParamRx, function (all, key) {
 			var value = params[key];
-			// if (typeof value === 'undefined') {
+			// if (_(value).isUndefined()) {
 			// 	throw new Error('Failed to parametrize route "' + route +
 			// 		'": parameter "' + key + '" was not specified');
 			// }
-			if (value === null || typeof value === 'undefined') {
+			if (value === null || _(value).isUndefined()) {
 				return '';
 			} else {
-				return '/' + encodeURIComponent(value);
+				return '/' + encodeURIPathSegment(value);
 			}
 		});
 	}
 
+	/*
+	 * Convert an array of strings (and of other string arrays) to a path,
+	 * by flattening the array and joining with slashes.
+	 * Remove protocol and reduces double-slashes.
+	 */
+	function processPath(path) {
+		if (_.isNull(path) || _.isUndefined(path)) {
+			path = ''; /* Throw error */
+		} else if (path instanceof Array) {
+			path = _(path)
+				.flatten()
+				.map(String)
+				.filter(function (str) { return str.length; })
+				.join('/');
+		} else {
+			path = String(path);
+		}
+		if (path.length === 0) {
+			throw new Error('No path specified for endpoint "' + name + '"');
+		}
+		/* Strip protocol from path */
+		path = path.replace(urlProtocolRx, '');
+		/* Reduce consecutive slashes to one */
+		path = path.replace(multiSlashRx, '/');
+		return path;
+	}
+
+	/*
+	 * Determine which protocol has been requested, via the three different ways
+	 * that the protocol may be specified.
+	 */
+	function processProtocol(options) {
+		var path = options.path;
+		var protoString = options.protocol;
+		var secure = options.secure;
+		var protoUrl = getCapture(urlProtocolRx, path, null);
+		var protoOpt = _.isUndefined(protoString) ? null : String(protoString);
+		var protoSec = _.isUndefined(secure) ? null : secure ? 'https' : 'http';
+		var protocol = [protoUrl, protoOpt, protoSec]
+			.reduce(function (protocol, test) {
+				return (protocol === null && test !== null) ? test : protocol;
+			}, null);
+		if (protocol === null) {
+			return protocol;
+		}
+		var protoNeq = function (proto) {
+			return proto !== null &&
+				protocol.toUpperCase() !== proto.toUpperCase();
+		};
+		if (protoNeq(protoOpt) || protoNeq(protoSec)) {
+			throw new Error('Protocols specified in options.path / ' +
+				'options.protocol / options.secure are inconsistent: ' +
+				[protoUrl, protoOpt, protoSec]
+					.map(function (s) {
+						return s === null ? '(none)' :
+							'"' + s.toUpperCase() + '"';
+					})
+					.join(', '));
+		}
+		return protocol;
+	}
+
 	/* Returns the Endpoint constructor */
-	function EndpointConstructor($http, toastService) {
+	function EndpointFactory($http, $q, toastService) {
 
 		Endpoint.prototype = {
 			constructor: Endpoint,
@@ -67,6 +168,11 @@
 			 * e.g. adding an API key or auth token to the root URL for an API.
 			 */
 			query: query,
+			/*
+			 * Returns a new endpoint created by setting the value of a parameter
+			 * in this endpoint.
+			 */
+			param: param,
 			/* Invokes the target and returns a promise */
 			invoke: invoke,
 			/* Is this endpoint (or a child of it) being invoked? */
@@ -82,9 +188,10 @@
 			head: invokeMethod('HEAD'),
 			options: invokeMethod('OPTIONS'),
 			/* A wrapper for the Endpoint, inspired by $resource */
-			defineResource,
-			/* Returns full URL */
-			toString: toString
+			defineResource: defineResource,
+			/* Returns full URL (parametrizing if a parameter is given) */
+			toString: toString,
+			parametrize: toString,
 		};
 
 		/* Hide internals if possible */
@@ -93,117 +200,155 @@
 			Object.defineProperty(Endpoint.prototype, 'endInvoke', { enumerable: false });
 		}
 
+		return Endpoint;
+
 		/* Constructor */
-		function Endpoint(name, options, parent) {
+		function Endpoint(friendlyName, options, parent) {
 			if (!options) {
 				throw new Error('Required parameter missing for Endpoint(name, options)');
 			}
-			var secure = options.secure || false;
-			var path = options.path;
-			var queryObj = options.query || {};
-			/* Process path */
-			var pathStart;
-			if (path instanceof Array) {
-				var firstPart = path.join('');
-				if (firstPart.length === 0) {
-					throw new Error('No path specified for endpoint "' + name + '"');
-				}
-				pathStart = firstPart.charAt(0);
-				path = _(path).flatten().join('/');
-			} else {
-				path = String(path);
-				pathStart = path.charAt(0);
+			/* Set missing options to those of parent if parent is specified */
+			if (parent) {
+				options = _({}).defaults(options,
+					{
+						protocol: parent.protocol,
+						path: parent.path,
+						query: parent.query,
+						params: parent.params
+					});
 			}
-			/* Is domainless? */
-			var domainless = '/.'.indexOf(pathStart) !== -1;
-			var relative = pathStart === '.';
-			var absolute = pathStart === '/';
-			if (secure && domainless) {
-				throw new Error('Domain must be specified if endpoint uses ' +
-					'HTTPS');
+			if (typeof options === 'string') {
+				options = {
+					path: options
+				};
 			}
+			/* Protocol */
+			var protocol = processProtocol(options);
+			var noProtocol = protocol === null;
+			var sameProtocol = protocol === '';
+			/* Path */
+			var path = processPath(options.path);
+			var secure = !noProtocol && protocol.toUpperCase() === 'HTTPS';
+			/* Is path domainless? If yes, is it relative or absolute? */
+			var relativePath = path.charAt(0) === '.';
+			var absolutePath = path.charAt(0) === '/';
+			var domainless = relativePath || absolutePath;
+			if (!noProtocol && domainless) {
+				throw new Error('Domain must be specified if protocol is ' +
+					'non-null.  protocol="' + protocol + '", path="' + path +
+					'"');
+			}
+			/* Query */
+			var queryObject = Object.freeze(_.clone(options.query || {}));
+			var queryString = convertObjectToQueryString(queryObject);
+			/* Params */
+			var paramObject = Object.freeze(_.clone(options.params || {}));
+			/* Error handler */
+			var errorHandler = !options.errorHandler ? defaultErrorHandler :
+				(function (self, errorHandler) {
+					return function () {
+						try {
+							return errorHandler.apply(self, arguments);
+						} catch (err) {
+							return defaultErrorHandler.apply(self, arguments);
+						}
+					};
+				})(this, options.errorHandler);
 			/* Store config */
-			this.name = name;
+			this.name = friendlyName;
 			this.secure = secure;
 			this.domainless = domainless;
-			this.protocol = this.domainless ? null :
-				this.secure ? 'https' : 'http';
-			this.path = (domainless && absolute ? '/' : '') + (path.length ? cleanPath(path) : '');
-			this.queryObj = queryObj;
-			var queryStr = queryToString(this.queryObj);
+			this.relative = relativePath;
+			this.absolute = absolutePath || !this.domainless;
+			this.protocol = protocol;
+			this.path = path;
+			this.query = queryObject;
+			this.queryString = queryString;
+			this.params = paramObject;
 			/* Base URL (no query string) */
-			this.baseUrl = (this.domainless ? '' : this.protocol + '://') +
-				this.path;
+			this.baseUrl = (noProtocol ? '' : sameProtocol ? '//' : protocol + '://') + path;
 			/* Full URL (with query string) */
-			this.url = this.baseUrl + (queryStr.length > 0 ? '?' + queryStr : '');
+			this.url = this.baseUrl + (queryString.length ? '?' + queryString : '');
 			/* Parent endpoint */
 			this.parent = parent || null;
 			/* Invocation tracker */
 			this.invokeCount = { any: 0, self: 0, child: 0 };
+			/* Error handler */
+			this.errorHandler = errorHandler;
 			/* Make the new endpoint immutable */
 			Object.freeze(this);
 		}
 
 		function extend(name, path) {
-			if (arguments.length !== 2) {
-				throw new Error('Wrong number of parameters for ' +
-					'endpoint.extend.  Did you forget to name the endpoint?');
+			var self = this;
+			if (arguments.length === 1) {
+				path = name, name = self.name;
 			}
-			return new Endpoint(name,
-				{
-					secure: this.secure,
-					path: [this.path, path],
-					query: this.queryObj
-				}, this);
+			var newPath = [self.path, path];
+			return new Endpoint(name, { path: newPath }, self);
 		}
 
-		function query(name, query) {
-			if (arguments.length !== 2) {
-				throw new Error('Wrong number of parameters for ' +
-					'endpoint.query.  Did you forget to name the endpoint?');
+		function param(name, key, value) {
+			var self = this;
+			if (arguments.length === 2) {
+				value = key, key = name, name = self.name;
 			}
-			return new Endpoint(name,
-				{
-					secure: this.secure,
-					path: this.path,
-					query: _({}).extend(this.queryObj, query)
-				}, this);
+			var newParam = {};
+			newParam[key] = value;
+			var newParams = _({}).extend(self.params, newParam);
+			return new Endpoint(name, { params: newParams }, self);
+		}
+
+		function query(name, queryObj) {
+			var self = this;
+			if (arguments.length === 1) {
+				queryObj = name, name = self.name;
+			}
+			var newQuery = _({}).extend(self.queryObj, queryObj);
+			return new Endpoint(name, { query: newQuery }, self);
+		}
+
+		function defaultErrorHandler(error) {
+			var self = this;
+			toastService.error('Failed to communicate with ' +
+				self.name + ': ' + (
+					!error ? 'Unknown error' :
+					typeof error === 'string' ? error :
+					error.message));
+			throw error;
 		}
 
 		function invoke(method, data, config) {
+			var self = this;
 			if (typeof method !== 'string') {
 				throw new Error('Method must be a string');
 			}
 			data = data || {};
 			/* Route parameters */
-			var params = data.params;
+			var params = _({}).defaults(data.params, self.params);
 			/* Query string */
 			var query = data.query;
 			/* Request payload */
 			var body = data.body;
 			/* URL */
-			var url = parametrizeRoute(this.baseUrl, _({}).defaults(params, body));
+			var url = self.toString(_({}).defaults(params, body));
 			/* $http config */
 			var fullConfig = {
 				method: method,
 				url: url,
-				params: _({}).extend(this.queryObj, query),
+				params: _({}).extend(self.queryObj, query),
 				data: hasBody(method) ? body : undefined
 			};
 			if (config) {
 				_(fullConfig).defaults(config);
 			}
-			var self = this;
+			/*
+			 * Make $http request with error handler and begin/end invoke
+			 * wrapper
+			 */
 			self.beginInvoke(true);
 			return $http(fullConfig)
-				.catch(function (error) {
-					toastService.error('Failed to communicate with ' +
-						self.name + ': ' + (
-							!error ? 'Unknown error' :
-							typeof error === 'string' ? error :
-							error.message));
-					throw error;
-				})
+				.catch(self.errorHandler)
 				.finally(function () {
 					self.endInvoke(true);
 				});
@@ -220,35 +365,46 @@
 		}
 
 		function beginInvoke(direct) {
-			this.invokeCount.any++;
+			var self = this, parent = self.parent;
+			self.invokeCount.any++;
 			if (direct) {
-				this.invokeCount.self++;
+				self.invokeCount.self++;
 			} else {
-				this.invokeCount.child++;
+				self.invokeCount.child++;
 			}
-			if (this.parent) {
-				this.parent.beginInvoke(false);
+			if (parent) {
+				parent.beginInvoke(false);
 			}
 		}
 
 		function endInvoke(direct) {
-			this.invokeCount.any--;
+			var self = this, parent = self.parent;
+			self.invokeCount.any--;
 			if (direct) {
-				this.invokeCount.self--;
+				self.invokeCount.self--;
 			} else {
-				this.invokeCount.child--;
+				self.invokeCount.child--;
 			}
-			if (this.parent) {
-				this.parent.endInvoke(false);
+			if (parent) {
+				parent.endInvoke(false);
 			}
 		}
 
 		function isInvoking(directOnly) {
-			return (directOnly ? this.invokeCount.self : this.invokeCount.any) > 0;
+			var self = this;
+			return (directOnly ? self.invokeCount.self : self.invokeCount.any) > 0;
 		}
 
-		function toString() {
-			return this.url;
+		function toString(params) {
+			var self = this;
+			if (arguments.length === 0) {
+				return self.url;
+			} else if (arguments.length === 1) {
+				return parametrizeRoute(self.baseUrl, params);
+			} else {
+				throw new Error('Wrong number of parameters for ' +
+					'endpoint.toString([params])');
+			}
 		}
 
 		/* 
@@ -297,10 +453,6 @@
 		 */
 		function defineResource(Constructor, extraMethods) {
 			var endpoint = this;
-			var name = Constructor.name;
-			// if (!name) {
-			// 	throw new Error('Resource constructor has no name');
-			// }
 			/* 
 			 * Methods added to instances.  Unsure whether $ prefix is good idea,
 			 * maybe use _ instead?  Something to avoid potential clashes with
@@ -313,7 +465,11 @@
 				$isNew: true,
 				$deleted: false
 			};
-			_(Constructor.prototype).extend(itemMethods);
+			if (extraMethods) {
+				_(itemMethods).extend(extraMethods);
+			}
+			itemMethods.prototype = Constructor.prototype;
+			Constructor.prototype = itemMethods;
 			if (Object.defineProperty) {
 				/* Hide extra instance methods if possible */
 				for (var prop in itemMethods) {
@@ -322,7 +478,13 @@
 				}
 			}
 
+			function EndpointResource() {
+				throw new Error('Cannot call constructor directly, use ' +
+					'endpoint.defineResource instead');
+			}
+
 			var defaultMethods = {
+				constructor: EndpointResource,
 				endpoint: endpoint,
 				/* CRUD */
 				create: create,
@@ -336,7 +498,6 @@
 				save: update,
 				remove: remove
 			};
-
 			return _({}).extend(defaultMethods, extraMethods || {});
 			
 			function create() {
@@ -344,9 +505,11 @@
 			}
 
 			function read(params) {
-				return endpoint.get(params)
+				return endpoint.get({ params: params })
 					.then(function (res) {
-						return new Constructor(res.data, res);
+						var item = new Constructor(res.data, res);
+						item.$isNew = false;
+						return item;
 					});
 			}
 
@@ -369,11 +532,20 @@
 				}
 				/* Update */
 				function doUpdate() {
+					if (item.$deleted) {
+						throw new Error('Attempted to save an itel that has ' +
+							'been deleted');
+					}
+					var saveItem = _(item)
+						.omit(function (v, k) { return k.charAt(0) === '$'; });
 					if (item.$isNew) {
-						return endpoint.post(item)
-							.then(function (res) { item.$isNew = false; });
+						return endpoint.post({ body: saveItem })
+							.then(function (res) {
+								item.$isNew = false;
+								return res;
+							});
 					} else {
-						return endpoint.put(item);
+						return endpoint.put({ body: saveItem });
 					}
 				}
 				/* Optional post-update */
@@ -389,23 +561,23 @@
 			}
 
 			function remove(item) {
-				return endpoint.delete(item)
-					.then(function (res) {
+				return endpoint.delete({ body: item })
+					.then(function () {
 						item.$deleted = true;
 						return Object.freeze(item);
 					});
 			}
 
 			function updateSelf() {
-				return update(this);
+				var self = this;
+				return update(self);
 			}
 
 			function removeSelf() {
-				return remove(this);
+				var self = this;
+				return remove(self);
 			}
 		}
-
-		return Endpoint;
 	}
 
 })(angular);
