@@ -3,11 +3,14 @@
 
 	/* Defines base endpoint for the API */
 	angular.module('api')
-		.factory('api_endpoint', api_endpoint);
+		.factory('api', apiEndpoint);
 
-	/* Returns an endpoint which can be extended to create new endpoints */
-	function api_endpoint(Endpoint, api_https, api_domain, api_path) {
-		return new Endpoint('API base', api_https, [api_domain, api_path]);
+	function apiEndpoint(Endpoint, apiConfig) {
+		return new Endpoint('API base',
+			{
+				secure: apiConfig.secure,
+				path: [apiConfig.domain, apiConfig.path]
+			});
 	}
 
 })(angular);
