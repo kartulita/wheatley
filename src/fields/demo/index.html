@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" ng-app="demoApp">
+<head>
+	<meta charset="utf8">
+	<title>Test</title>
+	<link rel="stylesheet" href="sanwebe-6/form_style.css">
+	<link rel="stylesheet" href="style.css">
+	<!-- Externals -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
+	<script>
+		/* Underscore.js polyfill as we aren't linking the utils module */
+		angular.module('utils', []).factory('_', function () { return _; });
+	</script>
+	<!-- Module -->
+	<script src="../module.js"></script>
+	<script src="../directive-proxy-service.js"></script>
+	<script src="../field-facade.js"></script>
+	<script src="../choice-facade.js"></script>
+	<script src="../drop-down-list-directive.js"></script>
+	<script src="../radio-group-directive.js"></script>
+	<!-- Local -->
+	<script src="app.js"></script>
+</head>
+<body ng-controller="demoController">
+	<form ng-class="config.style">
+		<h1>Experiment</h1>
+		<fieldset>
+			<legend>Style picker</legend>
+			<label for="style">Style</label>
+			<select id="style" ng-model="config.style" ng-options="theme.style as theme.title for theme in config.styles"></select>
+		</fieldset>
+		<fieldset>
+			<legend>Totally decoupled: specify field purpose only</legend>
+			<field name="gender" title="Gender" x-purpose="choice" ng-model="model.gender" x-choices="data.genders"></field>
+			<field name="country" title="Country" x-purpose="choice" ng-model="model.country" x-choices="data.countries"></field>
+		</fieldset>
+		<fieldset>
+			<legend>Request specific implementations</legend>
+			<field name="gender" title="Gender" x-purpose="drop-down-list" ng-model="model.gender" x-choices="data.genders"></field>
+			<field name="country" title="Country" x-purpose="radio-group" ng-model="model.country" x-choices="data.countries"></field>
+		</fieldset>
+		<fieldset>
+			<legend>Model</legend>
+			<pre>{{ model | json }}</pre>
+		</fieldset>
+		<fieldset>
+			<legend>Data</legend>
+			<pre>{{ data | json }}</pre>
+		</fieldset>
+	</form>
+</body>
+</html>
