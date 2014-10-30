@@ -31,7 +31,7 @@
 				scope.model = {
 					value: extModel(scope.$parent)
 				};
-				scope.$watch('model.value', function (val) {
+				scope.$watch('model.value', function () {
 					extModel.assign(scope.$parent, scope.model.value);
 				});
 				scope.$parent.$watch(modelName, function () {
