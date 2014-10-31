@@ -14,7 +14,7 @@
 				'</select>',
 			scope: {
 				choices: '='
-			},
+			}
 		};
 	}
 

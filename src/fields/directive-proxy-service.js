@@ -7,6 +7,7 @@
 	function directiveProxyService($compile, $injector, _) {
 
 		proxy.generateDirective = generateDirective;
+		proxy.generateAlias = generateAlias;
 
 		return proxy;
 
@@ -40,7 +41,12 @@
 				.replace(/[\s\-\:_]+\w/g, function (s) {
 					return s.charAt(s.length - 1).toUpperCase();
 				}) + 'Directive';
-			$injector.get(targetName);
+			try {
+				$injector.get(targetName);
+			} catch (e) {
+				console.error('Target directive not found or could not be injected: ' + target);
+				throw e;
+			}
 			/* Create new element */
 			var forward = angular.element('<' + target + '/>');
 			/* Parse attribute actions */
@@ -89,6 +95,15 @@
 				template: '<' + tag + '></' + tag + '>',
 				link: link
 			};
+		}
+
+		/* Generate an alias directive, within the given container */
+		function generateAlias(tag, target) {
+			return directiveProxyService.generateDirective(
+				tag,
+				function link(scope, element, attrs) {
+					directiveProxyService(target, null, scope, element, attrs);
+				});
 		}
 
 	}

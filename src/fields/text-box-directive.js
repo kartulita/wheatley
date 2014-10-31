@@ -2,19 +2,13 @@
 	'use strict';
 
 	angular.module('fields')
-		.directive('fieldDropDownList', dropDownListDirective);
+		.directive('fieldTextBox', textBoxDirective);
 
-	function dropDownListDirective() {
+	function textBoxDirective() {
 		return {
 			restrict: 'E',
 			replace: true,
-			template:
-				'<select class="field-drop-down-list" ' +
-				'ng-options="choice.value as choice.title for choice in choices">' +
-				'</select>',
-			scope: {
-				choices: '='
-			},
+			template: '<input class="field-text-box" type="text">',
 		};
 	}
 

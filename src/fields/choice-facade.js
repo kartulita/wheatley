@@ -18,7 +18,7 @@
 				var implementation =
 					hints.custom ?
 						hasAngularUI ?
-							'ui-dropdown' :
+							'autocomplete' :
 							'text-box' :
 						hints.many ?
 							'drop-down-list' :
