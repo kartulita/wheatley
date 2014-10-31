@@ -3,4 +3,4 @@
 
 	angular.module('api', ['utils']);
 
-})(angular);
+})(window.angular);

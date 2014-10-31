@@ -3,4 +3,4 @@
 
 	angular.module('utils', [])
 
-})(angular);
+})(window.angular);

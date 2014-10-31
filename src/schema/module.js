@@ -3,4 +3,4 @@
 
 	angular.module('schema', ['utils']);
 
-})(angular);
+})(window.angular);

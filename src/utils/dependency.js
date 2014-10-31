@@ -117,4 +117,4 @@
 			parentEl.removeChild(el);
 		});
 
-})(document);
+})(window.document);

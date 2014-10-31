@@ -3,4 +3,4 @@
 
 	angular.module('autoform', ['utils']);
 
-})(angular);
+})(window.angular);

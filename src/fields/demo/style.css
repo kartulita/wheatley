@@ -20,14 +20,33 @@ legend {
 fieldset {
 	display: block;
 	border: 0;
-	margin-top: 40px;
-	margin-bottom: 40px;
 	border: 1px solid silver;
 	border-radius: 12px;
 }
 
 input,textarea,select {
 	box-sizing: border-box;
+}
+
+fieldset,
+.cols {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.cols {
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: flex-start;
+	justify-content: stretch;
+}
+
+.cols>fieldset {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+.cols>fieldset+fieldset {
+	margin-left: 20px;
 }
 
 .field-label {

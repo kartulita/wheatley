@@ -10,4 +10,4 @@
 			return underscore;
 		});
 
-})(angular);
+})(window.angular);

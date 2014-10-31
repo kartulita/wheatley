@@ -8,17 +8,22 @@
 	<!-- Externals -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.2/ui-bootstrap.min.js"></script>
 	<script>
 		/* Underscore.js polyfill as we aren't linking the utils module */
 		angular.module('utils', []).factory('_', function () { return _; });
+		window.hasAngularUI = true;
 	</script>
 	<!-- Module -->
 	<script src="../module.js"></script>
 	<script src="../directive-proxy-service.js"></script>
+	<script src="../hint-parse-service.js"></script>
 	<script src="../field-facade.js"></script>
 	<script src="../choice-facade.js"></script>
 	<script src="../drop-down-list-directive.js"></script>
 	<script src="../radio-group-directive.js"></script>
+	<script src="../text-box-directive.js"></script>
 	<!-- Local -->
 	<script src="app.js"></script>
 </head>
@@ -27,19 +32,27 @@
 		<h1>Experiment</h1>
 		<fieldset>
 			<legend>Style picker</legend>
-			<label for="style">Style</label>
-			<select id="style" ng-model="config.style" ng-options="theme.style as theme.title for theme in config.styles"></select>
+			<label>Style
+				<select ng-model="config.style" ng-options="theme.style as theme.title for theme in config.styles"></select>
+			</label>
 		</fieldset>
 		<fieldset>
-			<legend>Totally decoupled: specify field purpose only</legend>
-			<field name="gender" title="Gender" x-purpose="choice" ng-model="model.gender" x-choices="data.genders"></field>
-			<field name="country" title="Country" x-purpose="choice" ng-model="model.country" x-choices="data.countries"></field>
+			<legend>Field purpose specified only</legend>
+			<field:auto name="gender" title="Gender as 'choice'" x-purpose="choice" ng-model="model.gender" x-choices="data.genders"></field:auto>
+			<field:auto name="country" title="Country as 'choice'" x-purpose="choice" ng-model="model.country" x-choices="data.countries"></field:auto>
 		</fieldset>
-		<fieldset>
-			<legend>Request specific implementations</legend>
-			<field name="gender" title="Gender" x-purpose="drop-down-list" ng-model="model.gender" x-choices="data.genders"></field>
-			<field name="country" title="Country" x-purpose="radio-group" ng-model="model.country" x-choices="data.countries"></field>
-		</fieldset>
+		<div class="cols">
+			<fieldset>
+				<legend>Specify field purpose with hints</legend>
+				<field:auto name="gender" title="Gender with hint 'many'" x-purpose="choice" x-hints="many" ng-model="model.gender" x-choices="data.genders"></field:auto>
+				<field:auto name="country" title="Country with hint 'not many'" x-purpose="choice" x-hints="not many" ng-model="model.country" x-choices="data.countries"></field:auto>
+			</fieldset>
+			<fieldset>
+				<legend>Request specific implementations</legend>
+				<field:auto name="gender" title="Gender as 'drop-down-list'" x-purpose="drop-down-list" ng-model="model.gender" x-choices="data.genders"></field:auto>
+				<field:auto name="country" title="Country as 'radio-group'" x-purpose="radio-group" ng-model="model.country" x-choices="data.countries"></field:auto>
+			</fieldset>
+		</div>
 		<fieldset>
 			<legend>Model</legend>
 			<pre>{{ model | json }}</pre>

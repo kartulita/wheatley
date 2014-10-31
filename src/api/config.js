@@ -22,4 +22,4 @@
 		return $({}).extend(apiConfigs.common, apiConfigs[apiMode]);
 	}
 
-})(angular);
+})(window.angular);

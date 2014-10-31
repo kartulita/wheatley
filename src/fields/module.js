@@ -1,6 +1,11 @@
-(function (angular) {
+(function (angular, hasAngularUI) {
 	'use strict';
 
-	angular.module('fields', ['utils']);
+	var deps = ['utils'];
+	if (hasAngularUI) {
+		deps.push('ui.bootstrap');
+	}
 
-})(angular);
+	angular.module('fields', deps);
+
+})(window.angular, window.hasAngularUI);

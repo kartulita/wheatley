@@ -12,5 +12,4 @@
 			return jquery;
 		});
 
-})(angular);
-
+})(window.angular);

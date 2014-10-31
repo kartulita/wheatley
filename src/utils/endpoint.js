@@ -580,4 +580,4 @@
 		}
 	}
 
-})(angular);
+})(window.angular);

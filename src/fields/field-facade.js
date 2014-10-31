@@ -3,16 +3,13 @@
 
 	angular.module('fields')
 		.directive('field', fieldDirective)
+		.directive('fieldAuto', fieldDirective)
 		;
 
 	function fieldDirective(directiveProxyService) {
-		return {
-			restrict: 'E',
-			terminal: true,
-			priority: 1000000,
-			replace: true,
-			template: '<label></label>',
-			link: function (scope, element, attrs) {
+		return directiveProxyService.generateDirective(
+			'label',
+			function link(scope, element, attrs) {
 				var purpose = attrs.purpose;
 				element
 					.addClass('field')
@@ -22,11 +19,13 @@
 							.addClass('field-label')
 							.text(attrs.title)
 					);
-				directiveProxyService('field:' + purpose, scope, element, attrs, ['purpose'])
+				if (purpose === 'auto') {
+					throw new Error('Field purpose cannot be "auto"');
+				}
+				directiveProxyService('field:' + purpose, ['purpose'], scope, element, attrs)
 					.addClass('field-' + purpose);
 				return;
-			}
-		};
+			});
 	}
 
-})(angular);
+})(window.angular);

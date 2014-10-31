@@ -1,28 +1,30 @@
-(function (angular) {
+(function (angular, hasAngularUI) {
 	'use strict';
 
 	angular.module('fields')
 		.directive('fieldChoice', choiceDirective);
 
-	function choiceDirective($parse, directiveProxyService) {
-		return {
-			restrict: 'E',
-			terminal: true,
-			priority: 1000000,
-			replace: true,
-			template: '<div></div>',
-			link: function (scope, element, attrs) {
+	function choiceDirective($parse, directiveProxyService, hintParseService) {
+		return directiveProxyService.generateDirective(
+			'div',
+			function link(scope, element, attrs) {
 				element.addClass('field-choice');
 				var choices = $parse(attrs.choices)(scope);
-				var implementation;
-				if (choices.length > 5) {
-					implementation = 'drop-down-list';
-				} else {
-					implementation = 'radio-group';
-				}
-				directiveProxyService('field:' + implementation, scope, element, attrs);
-			}
-		};
+				var hints = hintParseService.parse(attrs.hints, 
+					{
+						many: choices.length > 6,
+						custom: false
+					});
+				var implementation =
+					hints.custom ?
+						hasAngularUI ?
+							'ui-dropdown' :
+							'text-box' :
+						hints.many ?
+							'drop-down-list' :
+							'radio-group';
+				directiveProxyService('field:' + implementation, ['hints'], scope, element, attrs);
+			});
 	}
 
-})(angular);
+})(window.angular, window.hasAngularUI);

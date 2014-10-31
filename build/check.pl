@@ -57,17 +57,32 @@ sub check {
 		$last = $_;
 	}
 	close($file);
-	my $args;
 	my $bracketed;
-	$fn =~ /^(\(?)function\ ?\(([^\)]*)\)\ ?{$/ and $bracketed = $1 eq '(' and $args = $2 or
+	my $params;
+	my $args;
+	$fn =~ /^(\(?)function\ ?\(([^\)]*)\)\ ?{$/ and $bracketed = $1 eq '(' and $params = $2 or
 		return 'Function wrapper not found';
 	$strict =~ /^\s*(['"])use strict\1;$/ or
 		return 'Strict mode string does not immediately follow function wrapper';
 	$last =~ /^}(\)?)\(([^\)]*)\);$/ or
 		return 'Function wrapper is not closed properly (or is not closed on the last line)';
-	$args eq $2 or
-		print $i." - Global imports: ($2) => ($args)\n";
+	$args = $2;
 	($bracketed == ($1 eq ')')) or
 		return 'Function wrapper brackets don\'t match';
+	if ($params ne '') {
+		my @p = $params =~ /[^\s,]+/g;
+		my @a = $args =~ /[^\s,]+/g;
+		if (scalar @p != scalar @a) {
+			return 'Parameter count mismatch? ($params) <- ($args)';
+		}
+		for my $i (0 .. $#p) {
+			if ($p[$i] ne $a[$i] and "window.$p[$i]" ne $a[$i]) {
+				return "Parameter name mismatch? ($p[$i] <- $a[$i])";
+			}
+			if ($a[$i] =~ /^\w+$/) {
+				return "Global scope import is not scoped (prefix with 'window.').  ($p[$i] <- $a[$i])";
+			}
+		}
+	}
 	return 0;
 }
