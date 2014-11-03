@@ -9,8 +9,8 @@
 			restrict: 'E',
 			replace: true,
 			template:
-				'<select class="field-drop-down-list" ' +
-				'ng-options="choice.value as choice.title for choice in choices">' +
+				'<select class="field-drop-down-list"' +
+				' ng-options="choice.value as choice.title for choice in choices">' +
 				'</select>',
 			scope: {
 				choices: '='

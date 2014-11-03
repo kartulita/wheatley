@@ -86,9 +86,10 @@
 		}
 
 		/* Generates a proxy directive to be returned by a directive */
-		function generateDirective(tag, link) {
+		function generateDirective(tag, link, require) {
 			return {
 				restrict: 'E',
+				require: require,
 				terminal: true,
 				priority: 1000000,
 				replace: true,
