@@ -1,1 +1,0 @@
-!function(e){"use strict";e.module("schema",["utils"])}(window.angular),function(e){"use strict";e.module("schema").factory("schemaService",["apiEndpoint",function(e){var n=e.extend("schema service","/schema");return{get:function(e){return n.query({name:e}).get()}}}])}(window.angular);
