@@ -4,6 +4,8 @@
 	angular.module('fields')
 		.factory('hintParseService', hintParseService);
 
+	var notStr = 'not ';
+
 	function hintParseService() {
 		return {
 			process: processHints,
@@ -37,6 +39,9 @@
 
 		function stringifyHints(hints) {
 			return _(hints)
+				.filter(function (v, k) {
+					return k.length > 0;
+				})
 				.map(function (v, k) {
 					return (!v ? notStr : '') + k;
 				})

@@ -13,7 +13,7 @@ Facade for creating and managing form fields.
 
 ## Field directive
 
-<field ...></field> or <field:auto ...></field:auto>
+`<field ...></field>` or `<field:auto ...></field:auto>`
 
 A common interface to form fields.
 

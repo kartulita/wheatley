@@ -6,7 +6,7 @@
 
 	var defaultSuggestionCount = 8;
 
-	function autocompleteDirective($parse, hintParseService) {
+	function autocompleteDirective(hintParseService) {
 		return {
 			restrict: 'E',
 			replace: true,
@@ -18,27 +18,39 @@
 				' | filter: { title: $viewValue } | limitTo: suggestions"' +
 				' ng-model="model.value"' +
 				' typeahead-on-select="onSelect($item, $model, $label)"' +
-				' typeahead-editable="false">' +
+				' typeahead-editable="editable">' +
 				'</div>',
 			scope: {
 				choices: '='
 			},
 			link: function (scope, element, attrs, ngModelController) {
+				var hints = hintParseService.parse(attrs.hints,
+					{
+						custom: false,
+						optional: false,
+						show: defaultSuggestionCount
+					});
 				/* Value binding */
 				scope.model = { value: null };
-				ngModelController.$render = function () {
+				ngModelController.$render = setViewValue;
+				scope.onSelect = getViewValue;
+				setViewValue();
+				/* Number of suggestions to show */
+				scope.suggestions = parseInt(hints.show);
+				/* Custom values? */
+				scope.editable = hints.custom;
+
+				function setViewValue() {
 					scope.model.value = _(scope.choices)
 						.findWhere({ value: ngModelController.$viewValue });
-				};
-				scope.onSelect = function (item, model, label) {
+				}
+
+				function getViewValue(item) {
 					if (item) {
 						ngModelController.$setViewValue(item.value);
 					}
-					ngModelController.$setValidity('validSelection', !!item);
-				};
-				/* Number of suggestions to show */
-				scope.suggestions = parseInt(attrs.suggestions) || defaultSuggestionCount;
-				console.log(scope);
+					ngModelController.$setValidity('validSelection', !!item || hints.optional);
+				}
 			}
 		};
 	}

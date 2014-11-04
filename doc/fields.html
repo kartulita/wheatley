@@ -1,7 +1,12 @@
 <h1 id="fields">Fields</h1>
 <p>Facade for creating and managing form fields.</p>
+<ul>
+<li><p>Put complexity and ui logic as far away from the HTML/controllers as<br />possible (hierarchy of directives).</p></li>
+<li><p>Encapsulate implementation and provide common interfaces to different<br />implementations which serve similar purposes.</p></li>
+<li><p>Prefer to decorate existing ui controls, rather than creating custom ones.<br />This reduces the risk of accessibility and compatability issues.</p></li>
+</ul>
 <h2 id="field-directive">Field directive</h2>
-<p><field ...></field> or <field:auto ...></field:auto></p>
+<p><code>&lt;field ...&gt;&lt;/field&gt;</code> or <code>&lt;field:auto ...&gt;&lt;/field:auto&gt;</code></p>
 <p>A common interface to form fields.</p>
 <h3 id="purpose-attribute">Purpose attribute</h3>
 <p>Generally, the actual implementation of the field is of little importance so long<br />as the field is user-friendly for its desired purpose. This directive allows<br />fields to be specified by their <em>purpose</em>, and the actual implementation used is<br />chosen dynamically. This is particularly useful when automatically generating<br />forms from database schemas or reflection on DTOs.</p>
@@ -52,7 +57,9 @@ function demoController($scope) {
 
     $scope.model = {
         gender: &#39;M&#39;,
-        country: 44
+        country: 44,
+        genders: [],
+        countries: [372, 358, 380, 354, 370]
     };
 
     $scope.data = {
@@ -99,8 +106,12 @@ function demoController($scope) {
     &lt;script src=&quot;fields/hint-parse-service.js&quot;&gt;&lt;/script&gt;
     &lt;script src=&quot;fields/field-facade.js&quot;&gt;&lt;/script&gt;
     &lt;script src=&quot;fields/choice-facade.js&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;fields/multichoice-facade.js&quot;&gt;&lt;/script&gt;
     &lt;script src=&quot;fields/drop-down-list-directive.js&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;fields/fixed-list-directive.js&quot;&gt;&lt;/script&gt;
     &lt;script src=&quot;fields/radio-group-directive.js&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;fields/multiselect-fixed-list-directive.js&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;fields/checkbox-group-directive.js&quot;&gt;&lt;/script&gt;
     &lt;script src=&quot;fields/text-box-directive.js&quot;&gt;&lt;/script&gt;
     &lt;script src=&quot;fields/autocomplete-directive.js&quot;&gt;&lt;/script&gt;
     &lt;!-- Local --&gt;
@@ -112,21 +123,36 @@ function demoController($scope) {
         &lt;h1&gt;Experiment&lt;/h1&gt;
         &lt;fieldset&gt;
             &lt;legend&gt;Field purpose specified only&lt;/legend&gt;
-            &lt;field:auto name=&quot;gender&quot; title=&quot;Gender as &#39;choice&#39;&quot; x-purpose=&quot;choice&quot; ng-model=&quot;model.gender&quot; x-choices=&quot;data.genders&quot;&gt;&lt;/field:auto&gt;
-            &lt;field:auto name=&quot;country&quot; title=&quot;Country as &#39;choice&#39;&quot; x-purpose=&quot;choice&quot; ng-model=&quot;model.country&quot; x-choices=&quot;data.countries&quot;&gt;&lt;/field:auto&gt;
+            &lt;div class=&quot;cols&quot;&gt;
+                &lt;div&gt;
+                    &lt;fieldset&gt;
+                        &lt;legend&gt;Choice&lt;/legend&gt;
+                            &lt;field:auto title=&quot;Gender&quot; x-purpose=&quot;choice&quot; ng-model=&quot;model.gender&quot; x-choices=&quot;data.genders&quot;&gt;&lt;/field:auto&gt;
+                            &lt;field:auto title=&quot;Country&quot; x-purpose=&quot;choice&quot; ng-model=&quot;model.country&quot; x-choices=&quot;data.countries&quot;&gt;&lt;/field:auto&gt;
+                    &lt;/fieldset&gt;
+                    &lt;fieldset&gt;
+                        &lt;legend&gt;Multichoice&lt;/legend&gt;
+                        &lt;field:auto title=&quot;Genders&quot; x-purpose=&quot;multichoice&quot; ng-model=&quot;model.genders&quot; x-choices=&quot;data.genders&quot; x-hints=&quot;optional,many&quot; size=&quot;2&quot;&gt;&lt;/field:auto&gt;
+                    &lt;/fieldset&gt;
+                &lt;/div&gt;
+                &lt;fieldset&gt;
+                    &lt;legend&gt;Multichoice&lt;/legend&gt;
+                    &lt;field:auto title=&quot;Genders&quot; x-purpose=&quot;multichoice&quot; ng-model=&quot;model.genders&quot; x-choices=&quot;data.genders&quot; x-hints=&quot;optional&quot;&gt;&lt;/field:auto&gt;
+                    &lt;field:auto title=&quot;Countries&quot; x-purpose=&quot;multichoice&quot; ng-model=&quot;model.countries&quot; x-choices=&quot;data.countries&quot;&gt;&lt;/field:auto&gt;
+                &lt;/fieldset&gt;
+            &lt;/div&gt;
         &lt;/fieldset&gt;
-            &lt;fieldset&gt;
-                &lt;legend&gt;Specify field purpose with hints&lt;/legend&gt;
-                &lt;field:auto name=&quot;gender&quot; title=&quot;Gender with hint &#39;many&#39;&quot; x-purpose=&quot;choice&quot; x-hints=&quot;many&quot; ng-model=&quot;model.gender&quot; x-choices=&quot;data.genders&quot;&gt;&lt;/field:auto&gt;
-                &lt;field:auto name=&quot;country&quot; title=&quot;Country with hint &#39;not many&#39;&quot; x-purpose=&quot;choice&quot; x-hints=&quot;not many&quot; ng-model=&quot;model.country&quot; x-choices=&quot;data.countries&quot;&gt;&lt;/field:auto&gt;
-                &lt;field:auto name=&quot;country&quot; title=&quot;Country with hint &#39;custom&#39;&quot; x-purpose=&quot;choice&quot; x-hints=&quot;many,custom&quot; ng-model=&quot;model.country&quot; x-choices=&quot;data.countries&quot;&gt;&lt;/field:auto&gt;
-            &lt;/fieldset&gt;
-            &lt;fieldset&gt;
-                &lt;legend&gt;Request specific implementations&lt;/legend&gt;
-                &lt;field:auto name=&quot;gender&quot; title=&quot;Gender as &#39;text-box&#39;&quot; x-purpose=&quot;text-box&quot; ng-model=&quot;model.gender&quot; x-choices=&quot;data.genders&quot;&gt;&lt;/field:auto&gt;
-                &lt;field:auto name=&quot;country&quot; title=&quot;Country as &#39;autocomplete&#39;&quot; x-purpose=&quot;autocomplete&quot; ng-model=&quot;model.country&quot; x-choices=&quot;data.countries&quot;&gt;&lt;/field:auto&gt;
-            &lt;/fieldset&gt;
-        &lt;/div&gt;
+        &lt;fieldset&gt;
+            &lt;legend&gt;Specify field purpose with hints&lt;/legend&gt;
+            &lt;field:auto title=&quot;Gender with hint &#39;many&#39;&quot; x-purpose=&quot;choice&quot; x-hints=&quot;many&quot; ng-model=&quot;model.gender&quot; x-choices=&quot;data.genders&quot;&gt;&lt;/field:auto&gt;
+            &lt;field:auto title=&quot;Country with hint &#39;not many&#39;&quot; x-purpose=&quot;choice&quot; x-hints=&quot;not many&quot; ng-model=&quot;model.country&quot; x-choices=&quot;data.countries&quot;&gt;&lt;/field:auto&gt;
+            &lt;field:auto title=&quot;Country with hint &#39;custom&#39;&quot; x-purpose=&quot;choice&quot; x-hints=&quot;many,custom&quot; ng-model=&quot;model.country&quot; x-choices=&quot;data.countries&quot;&gt;&lt;/field:auto&gt;
+        &lt;/fieldset&gt;
+        &lt;fieldset&gt;
+            &lt;legend&gt;Request specific implementations&lt;/legend&gt;
+            &lt;field:auto title=&quot;Gender as &#39;text-box&#39;&quot; x-purpose=&quot;text-box&quot; ng-model=&quot;model.gender&quot; x-choices=&quot;data.genders&quot;&gt;&lt;/field:auto&gt;
+            &lt;field:auto title=&quot;Country as &#39;autocomplete&#39;&quot; x-purpose=&quot;autocomplete&quot; ng-model=&quot;model.country&quot; x-choices=&quot;data.countries&quot;&gt;&lt;/field:auto&gt;
+        &lt;/fieldset&gt;
         &lt;fieldset&gt;
             &lt;legend&gt;Model&lt;/legend&gt;
             &lt;pre&gt;{{ model | json }}&lt;/pre&gt;
@@ -187,16 +213,26 @@ fieldset,
 .cols {
     display: flex;
     flex-flow: row nowrap;
-    align-items: flex-start;
-    justify-content: stretch;
+    align-items: stretch;
+    justify-content: space-between;
 }
 
-.cols&gt;fieldset {
+/* TODO: Make a proper .rows class, and get rid of these asterisks */
+.cols&gt;* {
     margin-top: 0;
     margin-bottom: 0;
+    flex-grow: 1;
 }
-.cols&gt;fieldset+fieldset {
+.cols&gt;*+* {
     margin-left: 20px;
+}
+
+.cols&gt;*&gt;fieldset:first-child {
+    margin-top: 0;
+}
+
+.cols&gt;*&gt;fieldset:last-child {
+    margin-bottom: 0;
 }
 
 .field {
@@ -211,25 +247,25 @@ fieldset,
     clear: both;
 }
 
-.field-radio-group {
+.field-choicebox-group {
     display: block;
 }
 
-.field-radio-group&gt;.radio-item {
+.field-choicebox-group&gt;.choicebox-item {
     min-width: 80px;
     margin-right: 20px;
     display: inline-block;
     white-space: pre;
 }
 
-.field-radio-group&gt;.radio-item&gt;.radio-box {
+.field-choicebox-group&gt;.choicebox-item&gt;.choicebox-box {
     float: none;
     margin: 0;
     display: inline-block;
     vertical-align: top;
 }
 
-.field-radio-group&gt;.radio-item&gt;.radio-label {
+.field-choicebox-group&gt;.choicebox-item&gt;.choicebox-label {
     margin: 0 0 0 5px;
     display: inline-block;
     float: none;
@@ -240,7 +276,7 @@ fieldset,
     box-shadow: 0 0 3px 1px red;
 }
 
-.field .field-radio-group {
+.field .field-choicebox-group {
     box-shadow: none;
 }</code></pre>
 <h3 id="sanwebe-style.css">sanwebe-style.css</h3>
@@ -264,7 +300,7 @@ h3 {
 .smart-green {
     margin-left:auto;
     margin-right:auto;
-    max-width: 500px;
+    max-width: 800px;
     background: #F8F8F8;
     padding: 30px 30px 20px 30px;
     font: 12px Arial, Helvetica, sans-serif;

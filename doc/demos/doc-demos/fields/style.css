@@ -47,16 +47,26 @@ fieldset,
 .cols {
 	display: flex;
 	flex-flow: row nowrap;
-	align-items: flex-start;
-	justify-content: stretch;
+	align-items: stretch;
+	justify-content: space-between;
 }
 
-.cols>fieldset {
+/* TODO: Make a proper .rows class, and get rid of these asterisks */
+.cols>* {
 	margin-top: 0;
 	margin-bottom: 0;
+	flex-grow: 1;
 }
-.cols>fieldset+fieldset {
+.cols>*+* {
 	margin-left: 20px;
+}
+
+.cols>*>fieldset:first-child {
+	margin-top: 0;
+}
+
+.cols>*>fieldset:last-child {
+	margin-bottom: 0;
 }
 
 .field {
@@ -71,25 +81,25 @@ fieldset,
 	clear: both;
 }
 
-.field-radio-group {
+.field-choicebox-group {
 	display: block;
 }
 
-.field-radio-group>.radio-item {
+.field-choicebox-group>.choicebox-item {
 	min-width: 80px;
 	margin-right: 20px;
 	display: inline-block;
 	white-space: pre;
 }
 
-.field-radio-group>.radio-item>.radio-box {
+.field-choicebox-group>.choicebox-item>.choicebox-box {
 	float: none;
 	margin: 0;
 	display: inline-block;
 	vertical-align: top;
 }
 
-.field-radio-group>.radio-item>.radio-label {
+.field-choicebox-group>.choicebox-item>.choicebox-label {
 	margin: 0 0 0 5px;
 	display: inline-block;
 	float: none;
@@ -100,7 +110,7 @@ fieldset,
 	box-shadow: 0 0 3px 1px red;
 }
 
-.field .field-radio-group {
+.field .field-choicebox-group {
 	box-shadow: none;
 }
 

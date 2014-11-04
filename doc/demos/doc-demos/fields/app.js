@@ -8,7 +8,9 @@ function demoController($scope) {
 
 	$scope.model = {
 		gender: 'M',
-		country: 44
+		country: 44,
+		genders: [],
+		countries: [372, 358, 380, 354, 370]
 	};
 
 	$scope.data = {

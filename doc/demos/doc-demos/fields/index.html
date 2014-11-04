@@ -22,8 +22,12 @@
 	<script src="fields/hint-parse-service.js"></script>
 	<script src="fields/field-facade.js"></script>
 	<script src="fields/choice-facade.js"></script>
+	<script src="fields/multichoice-facade.js"></script>
 	<script src="fields/drop-down-list-directive.js"></script>
+	<script src="fields/fixed-list-directive.js"></script>
 	<script src="fields/radio-group-directive.js"></script>
+	<script src="fields/multiselect-fixed-list-directive.js"></script>
+	<script src="fields/checkbox-group-directive.js"></script>
 	<script src="fields/text-box-directive.js"></script>
 	<script src="fields/autocomplete-directive.js"></script>
 	<!-- Local -->
@@ -35,21 +39,36 @@
 		<h1>Experiment</h1>
 		<fieldset>
 			<legend>Field purpose specified only</legend>
-			<field:auto name="gender" title="Gender as 'choice'" x-purpose="choice" ng-model="model.gender" x-choices="data.genders"></field:auto>
-			<field:auto name="country" title="Country as 'choice'" x-purpose="choice" ng-model="model.country" x-choices="data.countries"></field:auto>
+			<div class="cols">
+				<div>
+					<fieldset>
+						<legend>Choice</legend>
+							<field:auto title="Gender" x-purpose="choice" ng-model="model.gender" x-choices="data.genders"></field:auto>
+							<field:auto title="Country" x-purpose="choice" ng-model="model.country" x-choices="data.countries"></field:auto>
+					</fieldset>
+					<fieldset>
+						<legend>Multichoice</legend>
+						<field:auto title="Genders" x-purpose="multichoice" ng-model="model.genders" x-choices="data.genders" x-hints="optional,many" size="2"></field:auto>
+					</fieldset>
+				</div>
+				<fieldset>
+					<legend>Multichoice</legend>
+					<field:auto title="Genders" x-purpose="multichoice" ng-model="model.genders" x-choices="data.genders" x-hints="optional"></field:auto>
+					<field:auto title="Countries" x-purpose="multichoice" ng-model="model.countries" x-choices="data.countries"></field:auto>
+				</fieldset>
+			</div>
 		</fieldset>
-			<fieldset>
-				<legend>Specify field purpose with hints</legend>
-				<field:auto name="gender" title="Gender with hint 'many'" x-purpose="choice" x-hints="many" ng-model="model.gender" x-choices="data.genders"></field:auto>
-				<field:auto name="country" title="Country with hint 'not many'" x-purpose="choice" x-hints="not many" ng-model="model.country" x-choices="data.countries"></field:auto>
-				<field:auto name="country" title="Country with hint 'custom'" x-purpose="choice" x-hints="many,custom" ng-model="model.country" x-choices="data.countries"></field:auto>
-			</fieldset>
-			<fieldset>
-				<legend>Request specific implementations</legend>
-				<field:auto name="gender" title="Gender as 'text-box'" x-purpose="text-box" ng-model="model.gender" x-choices="data.genders"></field:auto>
-				<field:auto name="country" title="Country as 'autocomplete'" x-purpose="autocomplete" ng-model="model.country" x-choices="data.countries"></field:auto>
-			</fieldset>
-		</div>
+		<fieldset>
+			<legend>Specify field purpose with hints</legend>
+			<field:auto title="Gender with hint 'many'" x-purpose="choice" x-hints="many" ng-model="model.gender" x-choices="data.genders"></field:auto>
+			<field:auto title="Country with hint 'not many'" x-purpose="choice" x-hints="not many" ng-model="model.country" x-choices="data.countries"></field:auto>
+			<field:auto title="Country with hint 'custom'" x-purpose="choice" x-hints="many,custom" ng-model="model.country" x-choices="data.countries"></field:auto>
+		</fieldset>
+		<fieldset>
+			<legend>Request specific implementations</legend>
+			<field:auto title="Gender as 'text-box'" x-purpose="text-box" ng-model="model.gender" x-choices="data.genders"></field:auto>
+			<field:auto title="Country as 'autocomplete'" x-purpose="autocomplete" ng-model="model.country" x-choices="data.countries"></field:auto>
+		</fieldset>
 		<fieldset>
 			<legend>Model</legend>
 			<pre>{{ model | json }}</pre>

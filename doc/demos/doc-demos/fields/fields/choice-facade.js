@@ -1,4 +1,4 @@
-(function (angular, hasAngularUI) {
+(function (angular) {
 	'use strict';
 
 	angular.module('fields')
@@ -12,19 +12,14 @@
 				var choices = $parse(attrs.choices)(scope);
 				var hints = hintParseService.parse(attrs.hints, 
 					{
-						many: choices.length > 6,
-						custom: false
+						many: choices.length > 8,
+						custom: false,
+						multi: false
 					});
-				var implementation =
-					hints.custom ?
-						hasAngularUI ?
-							'autocomplete' :
-							'text-box' :
-						hints.many ?
-							'drop-down-list' :
-							'radio-group';
-				directiveProxyService('field:' + implementation, ['hints'], scope, element, attrs);
+				var implementation = hints.custom ? 'autocomplete' :
+					hints.many ? 'drop-down-list' : 'radio-group';
+				directiveProxyService('field:' + implementation, { hints: 'copy' }, scope, element, attrs);
 			});
 	}
 
-})(window.angular, window.hasAngularUI);
+})(window.angular);

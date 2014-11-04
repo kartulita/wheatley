@@ -47,14 +47,15 @@
 				.omit(function (val, key) { return key.charAt(0) === '$'; })
 				.each(function (val, key) {
 					var action = _(attrActions).has(key) ? attrActions[key] : 'move';
+					var attr = _(attrs.$attr).has(key) ? attrs.$attr[key] : key;
 					if (action === 'remove' || action === 'move') {
-						element.removeAttr(attrs.$attr[key]);
+						element.removeAttr(attr);
 					}
 					if (action === 'copy' || action === 'move') {
-						forward.attr(attrs.$attr[key], val);
+						forward.attr(attr, val);
 					}
 					if (action.charAt(0) === '=') {
-						forward.attr(attrs.$attr[key] || key, action.substr(1));
+						forward.attr(attr, action.substr(1));
 					}
 				});
 			/* Compile */

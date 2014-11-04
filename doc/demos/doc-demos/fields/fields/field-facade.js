@@ -18,7 +18,7 @@
 					.append(
 						angular.element('<div/>')
 							.addClass('field-label')
-							.text(attrs.title)
+							.text(title)
 					);
 				if (purpose === 'auto') {
 					throw new Error('Field purpose cannot be "auto"');
