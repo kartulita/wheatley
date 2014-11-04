@@ -1,0 +1,83 @@
+
+<!doctype html>
+<html lang="en" ng-app="demoApp">
+<head>
+	<meta charset="utf8">
+	<title>Test</title>
+	<!-- Nice form styles -->
+	<link rel="stylesheet" href="sanwebe-style.css">
+	<!-- Underscore -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+	<!-- Angular -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.0-beta.13/angular.min.js"></script>
+	<!-- Angular bootstrap -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.2/ui-bootstrap-tpls.min.js"></script>
+	<!-- Module -->
+	<script src="utils/module.js"></script>
+	<script src="utils/underscore.js"></script>
+	<script src="directive-proxy/module.js"></script>
+	<script src="directive-proxy/directive-proxy-service.js"></script>
+	<script src="fields/module.js"></script>
+	<script src="fields/hint-parse-service.js"></script>
+	<script src="fields/field-facade.js"></script>
+	<script src="fields/choice-facade.js"></script>
+	<script src="fields/multichoice-facade.js"></script>
+	<script src="fields/drop-down-list-directive.js"></script>
+	<script src="fields/fixed-list-directive.js"></script>
+	<script src="fields/radio-group-directive.js"></script>
+	<script src="fields/multiselect-fixed-list-directive.js"></script>
+	<script src="fields/checkbox-group-directive.js"></script>
+	<script src="fields/text-box-directive.js"></script>
+	<script src="fields/autocomplete-directive.js"></script>
+	<!-- Local -->
+	<script src="app.js"></script>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body ng-controller="demoController">
+	<form class="smart-green">
+		<h1>Experiment</h1>
+		<fieldset>
+			<legend>Field purpose specified only</legend>
+			<div class="cols">
+				<div>
+					<fieldset>
+						<legend>Choice</legend>
+							<field:auto title="Gender" x-purpose="choice" ng-model="model.gender" x-choices="data.genders"></field:auto>
+							<field:auto title="Country" x-purpose="choice" ng-model="model.country" x-choices="data.countries"></field:auto>
+					</fieldset>
+					<fieldset>
+						<legend>Multichoice</legend>
+						<field:auto title="Genders" x-purpose="multichoice" ng-model="model.genders" x-choices="data.genders" x-hints="optional,many" size="2"></field:auto>
+					</fieldset>
+				</div>
+				<fieldset>
+					<legend>Multichoice</legend>
+					<field:auto title="Genders" x-purpose="multichoice" ng-model="model.genders" x-choices="data.genders" x-hints="optional"></field:auto>
+					<field:auto title="Countries" x-purpose="multichoice" ng-model="model.countries" x-choices="data.countries"></field:auto>
+				</fieldset>
+			</div>
+		</fieldset>
+		<fieldset>
+			<legend>Specify field purpose with hints</legend>
+			<field:auto title="Gender with hint 'many'" x-purpose="choice" x-hints="many" ng-model="model.gender" x-choices="data.genders"></field:auto>
+			<field:auto title="Country with hint 'not many'" x-purpose="choice" x-hints="not many" ng-model="model.country" x-choices="data.countries"></field:auto>
+			<field:auto title="Country with hint 'custom'" x-purpose="choice" x-hints="many,custom" ng-model="model.country" x-choices="data.countries"></field:auto>
+		</fieldset>
+		<fieldset>
+			<legend>Request specific implementations</legend>
+			<field:auto title="Gender as 'text-box'" x-purpose="text-box" ng-model="model.gender" x-choices="data.genders"></field:auto>
+			<field:auto title="Country as 'autocomplete'" x-purpose="autocomplete" ng-model="model.country" x-choices="data.countries"></field:auto>
+		</fieldset>
+		<fieldset>
+			<legend>Model</legend>
+			<pre>{{ model | json }}</pre>
+		</fieldset>
+		<fieldset>
+			<legend>Data</legend>
+			<pre>{{ data | json }}</pre>
+		</fieldset>
+	</form>
+</body>
+</html>
+

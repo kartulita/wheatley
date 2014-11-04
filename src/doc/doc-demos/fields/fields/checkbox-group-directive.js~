@@ -1,0 +1,78 @@
+(function (angular) {
+	'use strict';
+
+	angular.module('fields')
+		.directive('fieldCheckboxGroup', checkboxGroupDirective);
+
+	function checkboxGroupDirective() {
+		return {
+			restrict: 'E',
+			replace: true,
+			require: 'ngModel',
+			template:
+				'<div class="field-checkbox-group field-choicebox-group">' +
+				'<input type="checkbox" style="display: none;">' +
+				'<label class="checkbox-item choicebox-item" ng-repeat="choice in choices">' +
+				'<input class="checkbox-box choicebox-box" type="checkbox">' +
+				'<span class="checkbox-label choicebox-label">{{ choice.title }}</span>' +
+				'</label>' +
+				'</div>',
+			scope: {
+				choices: '='
+			},
+			link: function (scope, element, attrs, ngModelController) {
+				/* Value binding */
+				scope.model = { value: [] };
+				ngModelController.$render = setViewValue;
+				scope.$watch('choices', function () {
+					getBoxes().forEach(function (el) {
+						console.log(el);
+						angular.element(el).on('change', function () {
+							scope.$apply(function () {
+								onSelect(getChoice(el), el.selected);
+							});
+						});
+					});
+				});
+				setViewValue();
+
+				function getBoxes() {
+					return [].slice.apply(element[0].childNodes)
+						.filter(function (el) {
+							return el.nodeName === 'INPUT' && el.classList.contains('choicebox-box');
+						});
+				}
+
+				function getChoice(el) {
+					return angular.element(el).scope().choice;
+				}
+
+				function onSelect(choice, selected) {
+					console.log(choice, selected);
+					var values = scope.model.value;
+					var idx;
+					while ((idx = values.indexOf(choice.value)) !== -1) {
+						values.splice(idx, 1);
+					}
+					if (selected) {
+						values.push(choice.value);
+					}
+					getViewValue();
+				}
+
+				function setViewValue() {
+					scope.model.value = ngModelController.$viewValue;
+					getBoxes().forEach(function (el) {
+						var choice = getChoice(el);
+						el.checked = _(scope.model.value).contains(choice.value);
+					});
+				}
+
+				function getViewValue() {
+					ngModelController.$setViewValue(scope.model.value);
+				}
+			}
+		};
+	}
+
+})(window.angular);

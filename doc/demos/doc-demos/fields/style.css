@@ -1,0 +1,106 @@
+
+body {
+	padding: 60px;
+	background: #333;
+}
+
+label {
+	padding-top: 10px;
+}
+
+pre {
+	white-space: pre-wrap;
+}
+
+form {
+}
+
+legend {
+	font-size: inherit;
+	position: relative;
+	left: -10px;
+	padding: 0 2px;
+	margin: 0;
+	border: 0;
+	display: inline-block;
+	width: auto;
+}
+
+fieldset {
+	display: block;
+	border: 0;
+	border: 1px solid silver;
+	border-radius: 12px;
+	padding: 0 10px 10px 20px;
+}
+
+input,textarea,select {
+	box-sizing: border-box;
+}
+
+fieldset,
+.cols {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.cols {
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: flex-start;
+	justify-content: stretch;
+}
+
+.cols>fieldset {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+.cols>fieldset+fieldset {
+	margin-left: 20px;
+}
+
+.field {
+	margin-top: 10px;
+}
+
+.field-label {
+	text-indent: -8px;
+	margin-bottom: 5px;
+	font-weight: bold;
+	display: block;
+	clear: both;
+}
+
+.field-radio-group {
+	display: block;
+}
+
+.field-radio-group>.radio-item {
+	min-width: 80px;
+	margin-right: 20px;
+	display: inline-block;
+	white-space: pre;
+}
+
+.field-radio-group>.radio-item>.radio-box {
+	float: none;
+	margin: 0;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.field-radio-group>.radio-item>.radio-label {
+	margin: 0 0 0 5px;
+	display: inline-block;
+	float: none;
+	vertical-align: top;
+}
+
+.ng-invalid:not(:focus) {
+	box-shadow: 0 0 3px 1px red;
+}
+
+.field .field-radio-group {
+	box-shadow: none;
+}
+

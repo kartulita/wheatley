@@ -99,6 +99,7 @@ $(OUTDIR)/%.js: $(SRCDIR)/%/*.js | npm_deps $(OUTDIR) $(TMPDIR)
 
 $(DOCDIR)/%.html: $(SRCDIR)/$(DOCDIR)/%.md | $(DOCDIR)
 	pandoc --from=markdown_github --to=html < $< > $@
+	build/demo.sh $(SRCDIR) $(DOCDIR) $(patsubst $(SRCDIR)/$(DOCDIR)/%.md,%,$<) $(SRCDIR)/$(DOCDIR)/doc-demos/$(MODULE)
 
 npm_%: | $(NODE_MODULES)/%
 	$(NODE_INSTALL) $(@:npm_%=%)

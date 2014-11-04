@@ -1,0 +1,79 @@
+<h1 id="building">Building</h1>
+<p>This solution uses a makefile. The makefile recognises the following commands:</p>
+<pre><code>*   `make all`: Makes: bundle, modules, docs.
+
+*   `make bundle`: Builds the modules if needed, then combines them to make
+    `bundle.js`.
+
+*   `make modules`: Builds the modules.
+
+*   `make docs`: Converts the markdown documentation in `/src/doc` to HTML
+    documentation in `/doc`.
+
+*   `make tags`: Generates HTML tags which can be used to include the
+    scripts, either as a bundle, as modules, or as the original sources.
+    They are written to the `/tags` folder, and echoed to the terminal.
+
+*   `make syntax`: Syntax-checks all the source files.
+
+*   `make clean`: Removes the temporary directory and output directories and
+    their contents.
+
+*   `make deps`: Installs the build dependencies (globally, via npm).</code></pre>
+<h2 id="build-process">Build process</h2>
+<p>The makefile looks in the <code>src</code> directory for modules. A module is a folder<br />which contains a <code>module.js</code> file. A typical <code>module.js</code> looks like this:</p>
+<pre><code>(function () {
+    &#39;use strict;
+    
+    angular.module(&#39;arbuus&#39;)
+        .constant(&#39;arbuus_colour&#39;, &#39;green&#39;)
+        .constant(&#39;arbuus_shape&#39;, &#39;round&#39;)
+        ;
+
+})();</code></pre>
+<p>If a <code>module.js</code> file is found, then that folder is assumed to contain a module,<br />and is processed by the makefile. The makefile runs the following operations:</p>
+<pre><code>1.  Concatenate all the sources (*.js) in the module folder (non-recursive).
+
+2.  Passes the result through `ng-annotate`, which generates injector
+    annotations.
+
+3.  If TEST is not defined in the environment, then the result is beautified
+    by `uglifjs`.  Otherwise, it is compressed+mangled+uglified by
+    `uglifyjs`.
+
+4.  The result is stored in the `out` folder, and is names after the module.
+
+5.  All modules are concatenated and uglified (as in step 3) to produce a
+    single `bundle.js`.</code></pre>
+<p>Example: <code>make all</code> or <code>make</code><br />Test mode: <code>make TEST=1</code></p>
+<h2 id="directory-structure">Directory structure</h2>
+<p>The directory structure is initially:</p>
+<pre><code>makefile
+src/
+    doc/
+        [markdown files]
+    my-module/
+        module.js
+        service.js
+        other-service.js
+    another-module/
+        module.js
+        some-factory.js</code></pre>
+<p>And after running <code>make</code>, the following structure is added:</p>
+<pre><code>out/
+    my-module.js
+    another-module.js
+    bundle.js
+tmp/
+    [temp files]
+doc/
+    [html files]
+html/
+    sources.html
+    modules.html
+    bundle.html</code></pre>
+<h2 id="html-tags">HTML tags</h2>
+<p>The <code>bundle.html</code> file contains a tag for including the <code>bundle.js</code> file.<br />The <code>modules.html</code> file contains tags for including all the processed modules<br />individually.<br />The <code>sources.html</code> file contains tags for including all the original source<br />files.</p>
+<p>To specify a prefix for the script names in the tags files, run<br /><code>make tags [PREFIX=prefix]</code>. For example, if you want to test against your<br />original sources, and they will be accessed from <code>//localhost:4000/scripts/src</code><br />then run:</p>
+<pre><code>make tags PREFIX=//localhost:4000/scripts/src/</code></pre>
+<p>And import the contents of <code>html/sources.html</code> in your page templates. ** The<br />trailing slash on the PREFIX is required. **</p>

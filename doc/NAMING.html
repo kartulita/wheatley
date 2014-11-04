@@ -1,0 +1,157 @@
+<h1 id="naming">Naming</h1>
+<h2 id="annotations">Annotations</h2>
+<p>Let ng-annotate handle the injector annotations. Don't specify them yourself,<br />since this results in repetition of code - which is an anti-pattern.</p>
+<p>Bad:</p>
+<pre><code>angular.module(&#39;annotated&#39;, []);
+
+/*
+ * If the dependencies for the controller change, we have to make the change
+ * in two places, and ensure that we preserve the order.  ANTI-PATTERN!
+ */
+angular.module(&#39;annotated&#39;)
+    .controller(&#39;baseController&#39;, [&#39;$scope&#39;, baseController])
+    .controller(&#39;otherController&#39;, [&#39;$scope&#39;, &#39;$rootScope&#39;, &#39;$http&#39;, otherController])
+    ;
+
+function baseController($scope) {
+}
+
+function otherController($scope, $rootScope, $http) {
+}</code></pre>
+<p>Good:</p>
+<pre><code>angular.module(&#39;notAnnotated&#39;, []);
+
+/* Let ng-annotate create the annotations automatically before we minfiy */
+angular.module(&#39;notAnnotated&#39;)
+    .controller(&#39;baseController&#39;, baseController)
+    .controller(&#39;otherController&#39;, otherController)
+    ;
+
+function baseController($scope) {
+}
+
+function otherController($scope, $rootScope, $http) {
+}</code></pre>
+<p>When chaining functions, the trailing semicolon can be on the last line or on<br />a line of its own, I don't really care. The dot however MUST ALWAYS be at the<br />start of a line:</p>
+<pre><code>angular.module(&#39;example&#39;, []);
+
+angular.module(&#39;example&#39;)
+    .constant(&#39;Dot at&#39;, &#39;start&#39;)
+    ;
+
+angular.module(&#39;example&#39;)
+    constant(&#39;Do not do this&#39;, null).
+    constant(&#39;It looks&#39;, &#39;idiotic&#39;)
+    constant(&#39;like&#39;, &#39;coffeescript&#39;);</code></pre>
+<h2 id="modules">Modules</h2>
+<p>Modules have camelCased names. Declare the module and its dependencies in<br /><code>modules.js</code> (see <code>BUILD</code>):</p>
+<pre><code>angular.module(&#39;nameConventions&#39;, []);</code></pre>
+<p>Then get the module in other files:</p>
+<pre><code>angular.module(&#39;nameConventions&#39;)
+    .controller(&#39;myController&#39;, myController);</code></pre>
+<h2 id="constructors">Constructors</h2>
+<p>Constructors have uppercase first letter as usual:</p>
+<pre><code>angular.module(&#39;nameConventions&#39;)
+    .value(&#39;MyClass&#39;, MyClass)
+    .factory(&#39;MyOtherClass&#39;, MyOtherClassConstructor);</code></pre>
+<h2 id="separate-declarations-from-definitions">Separate declarations from definitions</h2>
+<p>Declarations come first (with documentation), definitions appear later:</p>
+<pre><code>/* Simple class, exported via module.value */
+function MyClass(value) {
+    /* Declarations first */
+
+    /* Gets the value */
+    this.getValue = getValue;
+
+    /* Definitions last.  Documentation goes with the declaration. */
+    function getValue() {
+        return value;
+    }
+}</code></pre>
+<p>Define functions using <code>function</code> rather than the initializer syntax. This way,<br />the order of definitions is unimportant.</p>
+<pre><code>/* Configured class, exported via module.factory */
+function MyOtherClassConstructor($http) {
+
+    /* Declarations first.  Document them. */
+    MyOtherClass.prototype = {
+        /* Gets the value */
+        getValue: getValue,
+        /* Gets the item */
+        getItem: getItem
+    };
+
+    function MyOtherClass(value) {
+        this.myClass = new MyClass(value);
+    }
+
+    function getItem() {
+        var params = {
+            /*
+             * We avoided initializer syntax, so it doesn&#39;t matter that we
+             * haven&#39;t defined getValue yet.
+             */
+            item: this.getValue();
+        };
+        return $http.get(&#39;/api&#39;, { params: params });
+    }
+
+    function getValue() {
+        return this.myClass.getValue();
+    }
+
+    return MyOtherClass;
+}</code></pre>
+<h2 id="constants">Constants</h2>
+<p>Constant values are namespaced, lowercase, with underscores between words:</p>
+<pre><code>angular.module(&#39;bools&#39;, []);
+
+angular.module(&#39;bools&#39;)
+    .value(&#39;bools_true&#39;, true)
+    .factory(&#39;bools_false&#39;, bools_false);
+
+function bools_false() {
+    return false;
+}</code></pre>
+<h2 id="services">Services</h2>
+<p>Services have camelCased names which end with <code>Service</code>:</p>
+<pre><code>angular.module(&#39;iPhone&#39;, []);
+
+angular.module(&#39;iPhone&#39;)
+    .service(&#39;nsaService&#39;, nsaService)
+    .service(&#39;gotoFailService&#39;, gotoFailService)
+    .factory(&#39;refreshTabsForNoReasonService&#39;, refreshTabsForNoReasonService);
+
+function nsaService($nsa, $personalData) {
+
+    this.update = sendPersonalDataToNSA;
+
+    function sendPersonalDataToNSA() {
+        $nsa.send($personalData);
+    }
+}
+
+function gotoFailService() {
+    /* TODO: https://github.com/mattdiamond/fuckitjs */
+}
+
+function refreshTabsForNoReasonService($interval) {
+    var timer;
+
+    return {
+        start: start,
+        stop: stop
+    };
+
+    function refreshTabs() {
+        /* TODO */
+    }
+
+    function start() {
+        timer = timer || $interval(refreshTabs, 60000);
+    }
+
+    function stop() {
+        $interval.cancel(timer);
+        time = undefined;
+    }
+}</code></pre>

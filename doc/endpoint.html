@@ -1,0 +1,822 @@
+<h1 id="utils">Utils</h1>
+<p>Miscallaneous utilities</p>
+<h2 id="endpoint">Endpoint</h2>
+<p>Angular's $resource has some minor drawbacks:</p>
+<ul>
+<li><p>No support for <code>PUT</code> method. We use the same method for both <code>create</code> and for<br /> <code>update</code>. I like APIs to be explicit, it makes testing and debugging easier.</p></li>
+<li><p>I wanted to add an automatic error handler, which toasts an error to the user.<br /> This could also be done using HTTP interceptors, but they feel like a bit of a<br /> monkey-patch. I want this to be per-API too, so the error message has the<br /> name of the respective API to aid debugging. This in turn requires APIs to<br /> have a name associated with them (naming is mandatory in Endpoint).</p></li>
+<li><p>I wanted a way to track when requests are active to some API (or a sub-API),<br /> in order to disable a set of browser elements relating to some API whenever a<br /> request to that API was active. I wanted this to be automatic, rather than<br /> requiring <code>beginRequest(...) .then(...) .finally(... endRequest)</code> on every<br /> call. This means I can disable <code>save</code> buttons while a save is active, in<br /> order to prevent double-saves (particularly for new items, since this would<br /> result in duplicates), and also to disable the editor fields and optional<br /> <code>new item</code> buttons, since if a save fails I want the user to be able to try<br /> again rather than losing their data due to clicking <code>new</code> without realising<br /> that their previous object hadn't completed saving.</p></li>
+</ul>
+<p>Additionally, I wanted the URI building to be modular and hierarchical - so the<br />base API path is stored in one place, and changing it there will automatically<br />update all API calls. This allows the entire app to easily switch between TEST<br />and PRODUCTION modes, just by changing the API root URL - or a global boolean<br />which is used to choose the API root URL. Endpoints effectively inherit from<br />each other, so rather than having:</p>
+<pre><code>GET https://api.fancy-tech-startup.com/social/user/search?commonparam=112358&amp;name=elon+musk
+GET https://api.fancy-tech-startup.com/social/user/693147?commonparam=112358
+PUT https://api.fancy-tech-startup.com/social/photo/31415926?commonparam=112358
+POST https://api.fancy-tech-startup.com/social/photo?commonparam=112358</code></pre>
+<p>which looks semi-nice until you realise that the domain needs to be changed (or<br />some other common piece of information), we can have:</p>
+<pre><code>angular.module(&#39;myApp&#39;, [&#39;utils&#39;]);
+
+angular.module(&#39;myApp&#39;)
+
+    /* Define API targets */
+    .constant(&#39;apiConfigs&#39;, {
+        &#39;test&#39;: {
+            https: false,
+            path: &#39;local-dev-server:49001/api&#39;,
+            query: { commonparam: 112358 }
+        },
+        &#39;live&#39;: {
+            https: true,
+            path: &#39;api.fancy-tech-startup.com&#39;,
+            query: { commonparam: 112358 }
+        }
+    })
+
+    /* Define which API target to use */
+    .constant(&#39;apiMode&#39;, &#39;test&#39;)
+
+    /* API config selector */
+    .factory(&#39;apiConfig&#39;, function (apiConfigs, apiMode) {
+        return apiConfigs[apiMode];
+    })
+
+    /* Base endpoint which others extend from */
+    .factory(&#39;baseApi&#39;, function (Endpoint, apiConfig) {
+        return new Endpoint(&#39;base API&#39;, apiConfig);
+    })
+
+    /* API for our social app */
+    .factory(&#39;socialApi&#39;, function (baseApi) {
+        return baseApi.extend(&#39;social API&#39;, &#39;social&#39;);
+    })
+
+    /* API for users */
+    .factory(&#39;userApi&#39;, function (socialApi) {
+        return socialApi.extend(&#39;user API&#39;, &#39;user&#39;)
+    })
+
+    /* API for photos */
+    .factory(&#39;photoApi&#39;, function (socialApi) {
+        return socialApi.extend(&#39;photo API&#39;, &#39;photo&#39;)
+    })
+
+    /* Run block to demonstrate generating the previously listed requests */
+    .run(function (userApi, photoApi) {
+        userApi.get({ query: { name: &#39;elon musk&#39; } }).then(...);
+        userApi.get({ params: { id: 693147 } }).then(...);
+
+        var photoData = { id: 31415926, name: &#39;Beach party&#39; };
+        photoApi.put({ body: photoData }).then(...);
+
+        var photoData = { name: &#39;Dungeon party&#39;, photo: photoUrl, user: 142857 };
+        photoApi.post({ body: postData })
+            .then(function (response) {
+                photoData.id = response.data.id;
+            })
+            .then(...);
+    })
+
+    /* Let&#39;s also demonstrate a $resource-inspired pattern too */
+
+    .factory(&#39;searchApiMethod&#39;, function () {
+        /*
+         * Shareable definition for the &quot;search&quot; method which may be added
+         * to APIs.  By defining common API routines externally, then
+         * refrencing them in endpoint.defineResource, we may create
+         * &quot;contracts&quot;.  The contract describes the API methods on the
+         * backend, not the names that the resources expose them as.
+         */
+        return function (query) {
+            /* `this` is return value of endpoint.defineResource */
+            return this.endpoint.get(
+                {
+                    params: { id: &#39;search&#39; },
+                    query: query
+                });
+        };
+    })
+
+    .factory(&#39;users&#39;, function (userApi, searchApiMethod) {
+        return userApi.defineResource(User, { search: searchApiMethod });
+
+        function User(data) {
+            data = data || { name: &#39;&#39;, email: &#39;&#39; };
+            this.name = data.name;
+            this.email = data.email;
+        }
+    })
+
+    .factory(&#39;photos&#39;, function (photoApi, searchApiMethod) {
+        return photoApi.defineResource(User, { search: searchApiMethod });
+
+        function Photo(data) {
+            data = data || { name: &#39;&#39;, photo: &#39;/img/default-photo.jpg&#39;, user: &#39;&#39; };
+            this.name = data.name;
+            this.photo = data.photo;
+            this.user = data.user;
+        }
+    })
+
+    .run(function (users, photos) {
+        users.search({ name: &#39;elon musk&#39; }).then(...);
+        users.get({ id: 693147 }).then(...);
+
+        photos.get({ id: 31415926 })
+            .then(function (photo) {
+                photo.name = &#39;Beach party&#39;;
+                return photo.$save();
+            })
+            .then(...);
+
+        var photo = photos.create({ name: &#39;Dungeon party&#39;, photo: photoUrl, user: 142857 });
+        photo.save().then(...);
+    })
+    ;</code></pre>
+<p>Note that the parametrization does not care which method you are using. Hence,<br />if you want to use POST for both creating and for updating, simply ensure that<br />the 'id' given is null/undefined for creates and defined/non-null for updates.<br />Using an endpoint with path 'myApi/:id', this will send CREATEs (null id) to<br />'/myApi' and UPDATEs (non-null id) to '/myApi/:id'. The Resource approach will<br />always use POST for create and PUT for update.</p>
+<p>If an URL parameter is null, the slash preceeding that parameter is also removed,<br />to prevent double/trailing slashes from occuring in the URL. It is not<br />recommended to null-out parameters that occur before the last parameter, as it<br />breaks the hierarchical design of endpoint (and presumably, your API too).<br />Note that properties of the optional 'params' object will take precedence over<br />properties of the optional 'body' object which have the same name, when<br />generating parametrizing URLs.</p>
+<p>We could declare a constant which people append URL fragments to, but this<br />requires people to actually read a spec and to voluntarily follow a standard,<br />both of which seem like bad assumptions to make.</p>
+<p>I also want services and sub-APIs to be modular and mountable in the front-end,<br />similar to the mounting/router design in the <code>express.js</code> back-end framework.<br />Reusable code =&gt; consistency + less maintanance.</p>
+<p>Due to this, I decided to create a new class which wraps <code>$http</code>, rather than<br />extending <code>$resource</code>.</p>
+<p>The <code>endpoint</code> exposes its parameters via properties. Using<br /><code>https://api.mydomain.ee/collection/search?meaning=42</code> as an example, these<br />properties give:</p>
+<ul>
+<li>protocol: <code>https</code></li>
+<li>path: <code>api.mydomain.ee/collection/search</code> ** Includes domain **</li>
+<li>baseUrl: <code>https://api.mydomain.ee/collection/search</code> (protocol + path)</li>
+<li>queryObj: <code>{ meaning: 42 }</code></li>
+<li>url: <code>https://api.mydomain.ee/collection/search?meaning=42</code></li>
+</ul>
+<p>Hence although <code>endpoint</code> is designed to encapsulate URL generation, the targets<br />represented by the endpoint can be passed to <code>$http</code> and <code>$resource</code> if needed.</p>
+<p>The path can be parametrized, for example:</p>
+<pre><code>var userApi = new Endpoint(&#39;User API&#39;, { path: &#39;/api/user/:userId&#39; });
+
+var uid = 25;
+userApi.get({ params: { userId: uid } })
+    .success(function (user) {
+        user.country = &#39;Estonia&#39;;
+        return userApi.put({ body: user });
+    });</code></pre>
+<p>Endpoint works a bit like $resource but strictly requires human-readable names<br />for endpoints (to aid debugging), and has the extend/query mechanism for growing<br />a hierarchy of endpoints without repeating the base path or common parameters.</p>
+<p>The automatic toasting on error was the main reason that I initially developed<br />this class. Additionally, ou can use the <code>isInvoking()</code> property to determine<br />whether there are any active requests on the endpoint or its descendants.</p>
+<h2 id="demo-app-todo-list">Demo app (TODO list)</h2>
+<p>Dependencies: utils</p>
+<h3 id="todo-app.js">todo-app.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;, [&#39;utils&#39;, &#39;ngMockE2E&#39;]);</code></pre>
+<h3 id="todo-backend.js">todo-backend.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .run(backend);
+
+function backend($httpBackend, $window, rootApi) {
+    var lists;
+
+    var q = &#39;\\?apiKey=42$&#39;;
+
+    var listsPath = rootApi.baseUrl + &#39;/lists&#39;;
+
+    var dumpRx = new RegExp(&#39;^&#39; + listsPath + &#39;/dump&#39; + q);
+    var listRx = new RegExp(&#39;^&#39; + listsPath + &#39;/([0-9]+)&#39; + q);
+    var listsRx = new RegExp(&#39;^&#39; + listsPath + q);
+
+    $httpBackend.whenGET(dumpRx)
+        .respond(function () {
+            console.log(&#39;Data dump from backend&#39;);
+            console.info(JSON.stringify(lists));
+            return [200];
+        });
+        
+    $httpBackend.whenGET(listsRx).respond(getLists);
+    $httpBackend.whenPOST(listsRx).respond(postList);
+
+    $httpBackend.whenGET(listRx).respond(getList);
+    $httpBackend.whenPUT(listRx).respond(putList);
+    $httpBackend.whenDELETE(listRx).respond(deleteList);
+
+    loadData();
+
+    return;
+
+    function loadData() {
+        var data = $window.localStorage.getItem(&#39;todoLists&#39;);
+        if (data) {
+            lists = JSON.parse(data);
+        } else {
+            lists = [];
+        }
+    }
+
+    function saveData() {
+        $window.localStorage.setItem(&#39;todoLists&#39;, JSON.stringify(lists));
+    }
+
+    function dataChanged() {
+        saveData();
+    }
+
+    function getId(url) {
+        var id = listRx.exec(url)[1];
+        if (String(Number(id)) !== id) {
+            throw new Error(&#39;Invalid ID: &#39; + id);
+        }
+        return Number(id);
+    }
+
+    function getLists(method, url, data) {
+        return [200, lists];
+    }
+
+    function postList(method, url, data) {
+        var list = JSON.parse(data);
+        if (list.id) {
+            return [400];
+        } else {
+            var id = getNextId();
+            list.id = id;
+            lists.push(list);
+            dataChanged();
+            return [200, { id: id }];
+        }
+    }
+
+    function getList(method, url) {
+        var id = getId(url);
+        var list = findListById(id);
+        return list ? [200, list] : [404];
+    }
+
+    function putList(method, url, data) {
+        var list = JSON.parse(data);
+        var id = getId(url);
+        if (id !== list.id) {
+            return [400];
+        }
+        var index = indexOfId(id);
+        if (index !== -1) {
+            lists[index] = list;
+            dataChanged();
+            return [200];
+        } else {
+            return [404];
+        }
+    }
+
+    function deleteList(method, url) {
+        var id = getId(url);
+        var index = indexOfId(id);
+        if (index !== -1) {
+            lists.splice(index, 1);
+            dataChanged();
+            return [200];
+        } else {
+            return [404];
+        }
+    }
+
+    function findListById(id) {
+        return _(lists).findWhere({ id: id });
+    }
+
+    function indexOfId(id) {
+        var index = -1;
+        lists.forEach(function (list, itemIndex) {
+            if (list.id === id) {
+                index = itemIndex;
+            }
+        });
+        return index;
+    }
+
+    function getNextId() {
+        return lists.reduce(function (id, list) {
+            return Math.max(id, list.id + 1);
+        }, 0);
+    }
+}</code></pre>
+<h3 id="todo-api.js">todo-api.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .constant(&#39;apiMode&#39;, &#39;test&#39;)
+    .constant(&#39;apiConfigs&#39;, {
+        common: {
+            query: { apiKey: 42 }
+        },
+        production: {
+            secure: true,
+            path: &#39;myapp.ee/api&#39;
+        },
+        test: {
+            secure: false,
+            path: &#39;dev-server:1337/api&#39;
+        }
+    })
+    .factory(&#39;apiConfig&#39;, apiConfig)
+    .factory(&#39;rootApi&#39;, rootApi);
+
+function apiConfig(apiConfigs, apiMode) {
+    return _({}).extend(apiConfigs.common, apiConfigs[apiMode]);
+}
+
+function rootApi(Endpoint, apiConfig) {
+    /* Creates root endpoint from which others extend */
+    return new Endpoint(&#39;Todo API&#39;, apiConfig);
+}</code></pre>
+<h3 id="todo-service.js">todo-service.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .factory(&#39;todoApi&#39;, todoApi)
+    .factory(&#39;todoService&#39;, todoService);
+
+function todoApi(rootApi) {
+    return rootApi.extend(&#39;Lists API&#39;, &#39;lists/:id&#39;);
+}
+
+function todoService($q, $rootScope, todoApi) {
+
+    var model = {
+        lists: [],
+        selected: null,
+    };
+
+    refreshLists();
+
+    return {
+        model: model,
+        refreshLists: refreshLists,
+        selectList: selectList,
+        newList: newList,
+        saveList: saveList,
+        deleteList: deleteList,
+        newItem: newItem,
+        dump: dump
+    };
+
+    function dump() {
+        todoApi.get({ params: { id: &#39;dump&#39; } });
+    }
+
+    function refreshLists() {
+        return todoApi.get({ params: { id: null } })
+            .then(function (result) {
+                var lists = result.data;
+                var selectedId = model.selected &amp;&amp; model.selected.id;
+                model.selected = null;
+                model.lists = lists;
+                selectList(
+                    _(model.lists).findWhere({ id: selectedId }) ||
+                    model.lists.length &amp;&amp; model.lists[0] ||
+                    null);
+            });
+    }
+
+    function selectList(list) {
+        model.selected = list;
+        $rootScope.$broadcast(&#39;selected list&#39;);
+    }
+
+    function newList() {
+        var list = {
+            id: null,
+            name: &#39;New list&#39;,
+            items: []
+        };
+        model.lists.push(list);
+        selectList(list);
+    }
+
+    function saveList() {
+        var list = model.selected;
+        /*
+         * If the backend decides whether to create or update based on
+         * whether the id parameter is non-null, then we could just do
+         * `todoApi.post({ body: list })` if the default new list has a null id
+         * value.  I have used separate put/post here in order to demonstrate
+         * each method.
+         */
+        if (list.id !== null) {
+            return todoApi.put({ body: list });
+        } else {
+            return todoApi.post({ body: list })
+                .then(function (result) {
+                    list.id = Number(result.data.id);
+                });
+        }
+    }
+
+    function deleteList() {
+        var list = model.selected;
+        if (list.id === null) {
+            promise = $q.when();
+        } else {
+            promise = todoApi.del({ params: { id: list.id } });
+        }
+        return promise
+            .then(function () {
+                var index = model.lists.indexOf(list);
+                model.lists.splice(index, 1);
+                if (list === model.selected) {
+                    selectList(null);
+                }
+            });
+    }
+
+    function newItem() {
+        var list = model.selected;
+        list.items.push({ done: false, name: &#39;New item&#39; });
+    }
+
+}</code></pre>
+<h3 id="todo-controller.js">todo-controller.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .controller(&#39;todoController&#39;, todoController)
+    .factory(&#39;busyTrackerInterceptor&#39;, busyTrackerInterceptor)
+    .config(function ($httpProvider) {
+        $httpProvider.interceptors.push(&#39;busyTrackerInterceptor&#39;)
+    });
+
+/*
+ * Could also check isInvoking() on api endpoint, which would probably be
+ * better since requests from other parts of the application would then be
+ * ignored.
+ */
+function busyTrackerInterceptor($q, $rootScope) {
+    var requestCount = 0;
+
+    return {
+        request: onRequest,
+        response: onResponse,
+        responseError: onResponseError
+    };
+
+    function requestStarted() {
+        if (requestCount++ === 0) {
+            $rootScope.$broadcast(&#39;busy&#39;, true);
+        }
+    }
+
+    function requestEnded() {
+        if (--requestCount === 0) {
+            $rootScope.$broadcast(&#39;busy&#39;, false);
+        }
+    }
+
+    function onRequest(config) {
+        requestStarted();
+        return config || $q.when(config);
+    }
+
+    function onResponse(response) {
+        requestEnded();
+        return response || $q.when(response);
+    }
+
+    function onResponseError(response) {
+        requestEnded();
+        return $q.reject(response);
+    }
+}
+
+function todoController($scope, $rootScope, todoService) {
+    var vm = $scope;
+
+    vm.isBusy = false;
+
+    vm.methods = {
+        dump: todoService.dump
+    };
+
+    $rootScope.$on(&#39;busy&#39;, function (event, busy) { vm.isBusy = busy; });
+}</code></pre>
+<h3 id="lists-controller.js">lists-controller.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .controller(&#39;listsController&#39;, listsController);
+
+function listsController($scope, todoService) {
+    var vm = $scope;
+
+    vm.model = todoService.model;
+
+    vm.methods = {
+        newList: todoService.newList,
+        openList: todoService.selectList,
+        refreshLists: todoService.refreshLists
+    };
+
+    return;
+}</code></pre>
+<h3 id="list-controller.js">list-controller.js</h3>
+<pre><code>angular.module(&#39;todoApp&#39;)
+    .controller(&#39;listController&#39;, listController);
+
+function listController($scope, todoService) {
+    var vm = $scope;
+
+    vm.model = {};
+
+    vm.methods = {
+        saveList: todoService.saveList,
+        deleteList: todoService.deleteList,
+        newItem: todoService.newItem,
+        editItem: editItem,
+        saveItem: saveItem,
+        deleteItem: deleteItem
+    };
+
+    vm.$on(&#39;selected list&#39;, onSelectedList);
+
+    onSelectedList();
+    
+    return;
+
+    function onSelectedList() {
+        vm.model = {
+            list: todoService.model.selected,
+            editingItem: null
+        };
+    }
+
+    function editItem(item) {
+        vm.model.editingItem = item;
+    }
+
+    function saveItem(item) {
+        vm.model.editingItem = null;
+        return todoService.saveList();
+    }
+
+    function deleteItem(item) {
+        var index = _(vm.model.list.indexOf).indexOf(item);
+        if (index !== -1) {
+            vm.model.list.splice(index, 1);
+        }
+        vm.model.editingItem = null;
+    }
+}</code></pre>
+<h3 id="index.html">index.html</h3>
+<pre><code>&lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+        &lt;meta charset=&quot;utf-8&quot;&gt;
+        &lt;title&gt;Todo&lt;/title&gt;
+        &lt;meta name=&quot;dependency&quot; content=&quot;underscore&quot;&gt;
+        &lt;meta name=&quot;dependency&quot; content=&quot;toastr&quot;&gt;
+        &lt;script src=&quot;//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular.min.js&quot;&gt;&lt;/script&gt;
+        &lt;meta name=&quot;dependency&quot; content=&quot;angular-mocks&quot;&gt;
+        &lt;script src=&quot;utils/dependency.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;utils/module.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;utils/endpoint.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;utils/toaster.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;todo-app.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;todo-backend.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;todo-api.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;todo-service.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;todo-controller.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;lists-controller.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;list-controller.js&quot;&gt;&lt;/script&gt;
+        &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;
+        &lt;link href=&quot;//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css&quot; rel=&quot;stylesheet&quot;&gt;
+    &lt;/head&gt;
+    &lt;!-- TODO lists application --&gt;
+    &lt;body&gt;
+        &lt;fieldset class=&quot;todo-app&quot;
+            ng-app=&quot;todoApp&quot;
+            ng-controller=&quot;todoController&quot;
+            ng-class=&quot;{ disabled: isWorking() }&quot;
+            ng-disabled=&quot;isBusy&quot;&gt;
+            &lt;!-- List of TODO lists --&gt;
+            &lt;form class=&quot;todo-lists&quot; name=&quot;todoLists&quot;
+                ng-controller=&quot;listsController&quot;&gt;
+                &lt;fieldset
+                    ng-disabled=&quot;!model.lists&quot;&gt;
+                    &lt;h1&gt;All TODO lists&lt;/h1&gt;
+                    &lt;div class=&quot;toolbar&quot;&gt;
+                        &lt;input type=&quot;button&quot; class=&quot;todo-list-new&quot; value=&quot;New list&quot;
+                            ng-click=&quot;methods.newList()&quot;&gt;
+                        &lt;input type=&quot;button&quot; class=&quot;todo-list-refresh&quot; value=&quot;Refresh&quot;
+                            ng-click=&quot;methods.refreshLists()&quot;&gt;
+                    &lt;/div&gt;
+                    &lt;div class=&quot;list-box&quot;&gt;
+                        &lt;div class=&quot;list-item&quot;
+                            ng-repeat=&quot;list in model.lists&quot;
+                            ng-class=&quot;{ selected: list === model.selected, transient: list.id === null }&quot;
+                            ng-click=&quot;methods.openList(list)&quot;&gt;
+                            &lt;span class=&quot;todo-list-name&quot;&gt;{{ list.name }}&lt;/span&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/fieldset&gt;
+            &lt;/form&gt;
+            &lt;!-- Selected TODO list --&gt;
+            &lt;form class=&quot;todo-list&quot; name=&quot;todoList&quot;
+                ng-controller=&quot;listController&quot;&gt;
+                &lt;fieldset
+                    ng-disabled=&quot;!model.list&quot;&gt;
+                    &lt;h1&gt;View/edit TODO list&lt;/h1&gt;
+                    &lt;div class=&quot;toolbar&quot;&gt;
+                        &lt;input type=&quot;button&quot; class=&quot;todo-list-item-new&quot; value=&quot;New item&quot;
+                            ng-disabled=&quot;todoList.$invalid&quot;
+                            ng-click=&quot;methods.newItem()&quot;&gt;
+                        &lt;input type=&quot;button&quot; class=&quot;todo-list-save&quot; value=&quot;Save list&quot;
+                            ng-disabled=&quot;todoList.$invalid&quot;
+                            ng-click=&quot;methods.saveList()&quot;&gt;
+                        &lt;span class=&quot;spacer&quot;&gt;&lt;/span&gt;
+                        &lt;input type=&quot;button&quot; class=&quot;todo-list-item-delete&quot; value=&quot;Delete list&quot;
+                            ng-click=&quot;methods.deleteList()&quot;&gt;
+                    &lt;/div&gt;
+                    &lt;div class=&quot;toolbar&quot;&gt;
+                        &lt;label for=&quot;list-name&quot; class=&quot;name-label&quot;&gt;Name&lt;/label&gt;
+                        &lt;input type=&quot;text&quot; id=&quot;list-name&quot; required
+                            ng-disabled=&quot;!model.list&quot;
+                            ng-model=&quot;model.list.name&quot;&gt;
+                    &lt;/div&gt;
+                    &lt;!-- List of TODO items --&gt;
+                    &lt;div class=&quot;list-box&quot;&gt;
+                        &lt;div class=&quot;list-item&quot;
+                            ng-repeat=&quot;item in model.list.items&quot;
+                            ng-init=&quot;index = $index&quot;
+                            ng-class=&quot;{ done: item.done, selected: item === model.editingItem }&quot;&gt;
+                            &lt;!-- Not editing view --&gt;
+                            &lt;span
+                                ng-hide=&quot;item === model.editingItem&quot;&gt;
+                                &lt;input type=&quot;checkbox&quot; class=&quot;todo-list-item-is-done&quot;
+                                    id=&quot;{{ &#39;todo-item-done-&#39; + index }}&quot;
+                                    ng-model=&quot;item.done&quot;
+                                    ng-blur=&quot;methods.saveItem(item)&quot;
+                                    ng-change=&quot;methods.saveItem(item)&quot;&gt;
+                                &lt;label class=&quot;todo-list-item-name&quot;
+                                    for=&quot;{{ &#39;todo-item-done-&#39; + index }}&quot;&gt;
+                                    &lt;span class=&quot;todo-list-item-name-text&quot;&gt;{{ item.name }}&lt;/span&gt;
+                                &lt;/label&gt;
+                                &lt;span class=&quot;buttons&quot;&gt;
+                                    &lt;input type=&quot;button&quot; class=&quot;todo-list-item-edit&quot; value=&quot;Edit&quot;
+                                        ng-click=&quot;methods.editItem(item)&quot;&gt;
+                                    &lt;input type=&quot;button&quot; class=&quot;todo-list-item-delete&quot; value=&quot;Delete&quot;
+                                        ng-hide=&quot;model.editingItem !== null&quot;
+                                        ng-click=&quot;methods.deleteItem(item)&quot;&gt;
+                                &lt;/span&gt;
+                            &lt;/span&gt;
+                            &lt;!-- Editing view --&gt;
+                            &lt;span
+                                ng-show=&quot;item === model.editingItem&quot;&gt;
+                                &lt;input type=&quot;text&quot; class=&quot;todo-list-item-name&quot; required
+                                    ng-model=&quot;item.name&quot;&gt;
+                                &lt;span class=&quot;buttons&quot;&gt;
+                                    &lt;input type=&quot;button&quot; class=&quot;todo-list-item-save&quot; value=&quot;Save&quot;
+                                        ng-click=&quot;methods.saveItem(item)&quot;&gt;
+                                &lt;/span&gt;
+                            &lt;/span&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/fieldset&gt;
+            &lt;/form&gt;
+            &lt;div&gt;
+                &lt;div class=&quot;buttons bottom&quot;&gt;
+                    &lt;input type=&quot;button&quot; class=&quot;todo-dump&quot; value=&quot;Dump to console&quot;
+                        ng-click=&quot;methods.dump()&quot;&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/fieldset&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h3 id="style.css">style.css</h3>
+<pre><code>* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    font-family: sans-serif;
+    font-size: 16px;
+    background: gray;
+}
+
+.todo-app,
+.todo-app&gt;* {
+    margin: 10px;
+    border: 1px solid black;
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.todo-app {
+    display: block;
+    background: dodgerblue;
+}
+
+.todo-app&gt;* {
+    background: lightcyan;
+}
+
+.todo-app h1 {
+    text-align: center;
+    font-size: 24px;
+}
+
+.todo-app .toolbar {
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: stretch;
+    padding: 5px 10px 5px 10px;
+}
+
+.todo-app fieldset {
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+
+.todo-app .toolbar+.toolbar {
+    border-top: none;
+}
+
+.todo-app .toolbar&gt;* {
+    margin: 2px;
+}
+
+.todo-app .toolbar&gt;label {
+    margin-left: 10px;
+    margin-right: 5px;
+}
+
+.todo-app .toolbar&gt;label:after {
+    content: &#39;:&#39;
+}
+
+.todo-app .toolbar&gt;.spacer {
+    width: 5px;
+}
+
+.todo-app .buttons {
+    border: 0px;
+    border-radius: 0;
+    float: right;
+    clear: right;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+.todo-app .bottom {
+    float: none;
+    clear: none;
+    padding: 10px;
+}
+
+.todo-app input[type=button] {
+    border-radius: 5px;
+}
+
+.todo-app .todo-lists {
+    flex: 1 1 400px;
+}
+
+.todo-app .todo-list {
+    flex: 1 0 600px;
+}
+
+.todo-app .list-box {
+    overflow-x: auto;
+    overflow-y: auto;
+    background: white;
+    height: 270px;
+}
+
+.todo-app .list-box .list-item {
+    padding: 10px;
+    background: skyblue;
+}
+
+.todo-app .list-box .list-item.selected {
+    background: steelblue;
+    color: white;
+    border: none;
+}
+
+.todo-app .list-box .list-item.done {
+}
+
+.todo-app .list-box .list-item.transient {
+    font-style: italic;
+}
+
+.todo-app .list-box .list-item.transient:after {
+    content: &#39;*&#39;;
+}
+
+.todo-app .todo-list-item-is-done {
+    display: none;
+}
+
+.todo-app .todo-list-item-name-text {
+    padding-right: 200px;
+}
+
+.todo-app .todo-list-item-name-text:before {
+    font-family: &#39;FontAwesome&#39;;
+    content: &#39;\f096&#39;;
+    margin: 10px;
+    margin-left: 0;
+}
+
+.todo-app .done .todo-list-item-name-text:before {
+    content: &#39;\f046&#39;;
+}</code></pre>

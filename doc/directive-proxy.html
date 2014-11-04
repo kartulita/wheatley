@@ -1,0 +1,77 @@
+<h1 id="directive-proxy-service">Directive Proxy Service</h1>
+<p>A service which proxies directives.</p>
+<h2 id="example">Example</h2>
+<pre><code>angular.module(&#39;demo&#39;, [&#39;directive-proxy&#39;])
+    .directive(&#39;tag&#39;, tagDirective)
+    .directive(&#39;loud&#39;, loudDirective)
+    ;
+
+function tagDirective(directiveProxyService) {
+    return directiveProxyService.generateDirective(
+        &#39;span&#39;,
+        function link(scope, element, attrs) {
+            var tag = attrs.name;
+            directiveProxyService(tag, { &#39;name&#39;: &#39;remove&#39;, &#39;content&#39;: &#39;remove&#39; }, scope, element, attrs)
+                .addClass(&#39;proxied&#39;)
+                .text(attrs.content)
+                ;
+        });
+}
+
+function loudDirective() {
+    return {
+        restrict: &#39;E&#39;,
+        replace: true,
+        template: &#39;&lt;span style=&quot;color: red; font-weight: bold;&quot;&gt;&lt;/span&gt;&#39;
+    };
+}</code></pre>
+<p>HTML:</p>
+<pre><code>&lt;tag name=&quot;loud&quot; content=&quot;Loud text&quot;&gt;&lt;/tag&gt;</code></pre>
+<p>Result:</p>
+<pre><code>&lt;span class=&quot;proxied&quot;&gt;
+    &lt;span style=&quot;color: red; font-weight: bold;&quot;&gt;Loud text&lt;/span&gt;
+&lt;/span&gt;</code></pre>
+<h2 id="directiveproxyservice.generatedirective-tag-link-require">directiveProxyService.generateDirective( tag link [require] )</h2>
+<p>This function generates a directive definition, something like this:</p>
+<pre><code>{
+    restrict: &#39;E&#39;,
+    priority: &lt;high&gt;,
+    terminal: true,
+    replace: true,
+    template: &#39;&lt;&#39; + tag + &#39;/&gt;&#39;,
+    link: link,
+    require: require
+}</code></pre>
+<h2 id="directiveproxyservice.generatealias-tag-target">directiveProxyService.generateAlias( tag target )</h2>
+<p>Generates an alias directive, identical to:</p>
+<pre><code>directiveProxyService.generateDirective(
+    tag,
+    function link(...) =&gt; directiveProxyService(target, null, ...)
+);</code></pre>
+<h2 id="directiveproxyservice-target-attractions-scope-element-attrs">directiveProxyService( target attrActions scope element attrs )</h2>
+<p>This function does the following:</p>
+<ol>
+<li><p>Ensured that the target directive exists (via $injector) and throws if it<br />does not.</p></li>
+<li><p>Generates a HTML element to invoke the target directive.</p></li>
+<li><p>Transfers attributes from the parent element to the new element, as<br />specified by attrActions.</p></li>
+<li><p>Compiles the HTML element with its attributes.</p></li>
+<li><p>Appends this new element to the parent element (specified via parameters).</p></li>
+<li><p>Returns the new element.</p></li>
+</ol>
+<h3 id="attractions">attrActions</h3>
+<p>Object specifying how attributes are to be transferred:</p>
+<pre><code>{
+    &#39;id&#39;: &#39;leave&#39;,
+    &#39;ng-model&#39;: &#39;move&#39;,
+    &#39;class&#39;: &#39;copy&#39;,
+    &#39;target&#39;: &#39;remove&#39;,
+    &#39;attr&#39;: &#39;=value&#39;
+}</code></pre>
+<ul>
+<li><strong>leave</strong>: leave the attribute on the parent element.</li>
+<li><strong>move</strong>: move the attribute to the child element.</li>
+<li><strong>copy</strong>: copy the attribute to the child element.</li>
+<li><strong>remove</strong>: remove the attribute from the parent element.</li>
+<li><strong>=<value></strong>: set the child attribute to the specified value.</li>
+</ul>
+<p>Default: <em>move</em> all attributes, except <code>class</code> and <code>id</code>, which default to <em>leave</em>.</p>

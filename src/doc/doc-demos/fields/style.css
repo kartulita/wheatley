@@ -1,0 +1,116 @@
+
+body {
+	padding: 60px;
+	background: #333;
+}
+
+label {
+	padding-top: 10px;
+}
+
+pre {
+	white-space: pre-wrap;
+}
+
+form {
+}
+
+legend {
+	font-size: inherit;
+	position: relative;
+	left: -10px;
+	padding: 0 2px;
+	margin: 0;
+	border: 0;
+	display: inline-block;
+	width: auto;
+}
+
+fieldset {
+	display: block;
+	border: 0;
+	border: 1px solid silver;
+	border-radius: 12px;
+	padding: 0 10px 10px 20px;
+}
+
+input,textarea,select {
+	box-sizing: border-box;
+}
+
+fieldset,
+.cols {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.cols {
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: stretch;
+	justify-content: space-between;
+}
+
+/* TODO: Make a proper .rows class, and get rid of these asterisks */
+.cols>* {
+	margin-top: 0;
+	margin-bottom: 0;
+	flex-grow: 1;
+}
+.cols>*+* {
+	margin-left: 20px;
+}
+
+.cols>*>fieldset:first-child {
+	margin-top: 0;
+}
+
+.cols>*>fieldset:last-child {
+	margin-bottom: 0;
+}
+
+.field {
+	margin-top: 10px;
+}
+
+.field-label {
+	text-indent: -8px;
+	margin-bottom: 5px;
+	font-weight: bold;
+	display: block;
+	clear: both;
+}
+
+.field-choicebox-group {
+	display: block;
+}
+
+.field-choicebox-group>.choicebox-item {
+	min-width: 80px;
+	margin-right: 20px;
+	display: inline-block;
+	white-space: pre;
+}
+
+.field-choicebox-group>.choicebox-item>.choicebox-box {
+	float: none;
+	margin: 0;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.field-choicebox-group>.choicebox-item>.choicebox-label {
+	margin: 0 0 0 5px;
+	display: inline-block;
+	float: none;
+	vertical-align: top;
+}
+
+.ng-invalid:not(:focus) {
+	box-shadow: 0 0 3px 1px red;
+}
+
+.field .field-choicebox-group {
+	box-shadow: none;
+}
+
