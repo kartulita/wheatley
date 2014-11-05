@@ -79,7 +79,7 @@
 			var text = el.text();
 			if (/angular\.module|var.*function|function.*return|use strict/.test(text)) {
 				el.attr('class', 'language-javascript');
-			} else if (/<(\w+)[^>]*>.*<\/\1>/.test(text)) {
+			} else if (/<([\w:\-_]+)[^>]*>.*<\/\1>/.test(text)) {
 				el.attr('class', 'language-markup');
 			}
 		});
