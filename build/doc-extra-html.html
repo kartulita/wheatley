@@ -1,23 +1,24 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js"></script>
 <!-- link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css" -->
 <style>
-	p>code {
-		display: inline-block;
-		color: inherit;
-		background: inherit;
+	code {
 		border: 0;
 		border-radius: 0;
-		margin: 0 0.2em;
+		color: inherit;
+		background: inherit;
+		margin: 0;
 		padding: 0;
-		font-size: 90%;
 		line-height: inherit;
+		font-size: 90%;
+	}
+	p>code {
+		display: inline-block;
+		margin: 0 0.2em;
 	}
 	pre>code {
 		font-size: 60%;
 		white-space: pre-wrap;
 		text-indent: 0;
-		background: inherit;
-		border: 0;
 		border-left: 1px solid black;
 		border-right: 1px solid black;
 		border-radius: 1em;
@@ -77,7 +78,7 @@
 				return;
 			}
 			var text = el.text();
-			if (/angular\.module|var.*function|function.*return|use strict/.test(text)) {
+			if (/^\s*var\s|angular\.module|function.*return|use strict/.test(text)) {
 				el.attr('class', 'language-javascript');
 			} else if (/<([\w:\-_]+)[^>]*>.*<\/\1>/.test(text)) {
 				el.attr('class', 'language-markup');
