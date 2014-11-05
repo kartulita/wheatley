@@ -38,12 +38,16 @@ function indent {
 	sed -e 's/\t/    /g'
 }
 
+function nobr {
+	sed -e 's/<br[^>]*>//g'
+}
+
 function highlight {
 	"$(dirname "$0")/doc-highlight.pl"
 }
 
 (
 	html_head | title
-	pandoc --from=markdown_github --to=html | highlight
+	cat | nobr | highlight
 	html_tail
 ) | indent

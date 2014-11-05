@@ -32,7 +32,7 @@ The makefile looks in the `src` directory for modules.  A module is a folder
 which contains a `module.js` file.  A typical `module.js` looks like this:
 
 	(function () {
-		'use strict;
+		'use strict';
 		
 		angular.module('arbuus', ['climate'])
 			.constant('arbuus_colour', 'green')

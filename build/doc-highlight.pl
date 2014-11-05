@@ -11,7 +11,7 @@ while (<>) {
 		$lang = 'css' if ($2 eq 'css');
 	}
 	if (/<pre><code>/ and $lang ne '') {
-		s/<code/"<code class=\"language-$lang line-numbers\""/e;
+		s/<code/"<code class=\"language-$lang\""/e;
 	}
 	$lang = 'none' if (/<\/code>/);
 	print $_;
