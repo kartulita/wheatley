@@ -3,7 +3,7 @@
 ## Annotations
 
 Let ng-annotate handle the injector annotations.  Don't specify them yourself,
-since this results in repetition of code - which is an anti-pattern.
+since this results in repetition of code - which is an ugly anti-pattern.
 
 Bad:
 
@@ -51,8 +51,8 @@ start of a line:
 		;
 
 	angular.module('example')
-		constant('Do not do this', null).
-		constant('It looks', 'idiotic')
+		constant('Do not do this', null).  <-- None of this crap
+		constant('It looks', 'idiotic').
 		constant('like', 'coffeescript');
 
 ## Modules
@@ -130,7 +130,9 @@ the order of definitions is unimportant.
 
 ## Constants
 
-Constant values are namespaced, lowercase, with underscores between words:
+Constant values are namespaced, lowercase, with underscores between words
+(snake-case).  Actually, I may have broken this a few times, maybe just follow
+the camelCase convention used for everything else (but keep namespacing).
 
     angular.module('bools', []);
 
@@ -163,7 +165,7 @@ Services have camelCased names which end with `Service`:
 	}
 
 	function gotoFailService() {
-		/* TODO: https://github.com/mattdiamond/fuckitjs */
+		/* TODO: include https://github.com/mattdiamond/fuckitjs */
 	}
 
 	function refreshTabsForNoReasonService($interval) {

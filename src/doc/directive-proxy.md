@@ -39,7 +39,9 @@ Result:
 		<span style="color: red; font-weight: bold;">Loud text</span>
 	</span>
 
-## directiveProxyService.generateDirective( tag link [require] )
+## Methods
+
+### directiveProxyService.generateDirective( tag link [require] )
 
 This function generates a directive definition, something like this:
 
@@ -53,7 +55,7 @@ This function generates a directive definition, something like this:
 		require: require
 	}
 
-## directiveProxyService.generateAlias( tag target )
+### directiveProxyService.generateAlias( tag target )
 
 Generates an alias directive, identical to:
 
@@ -62,7 +64,7 @@ Generates an alias directive, identical to:
 		function link(...) => directiveProxyService(target, null, ...)
 	);
 
-## directiveProxyService( target attrActions scope element attrs )
+### directiveProxyService( target attrActions scope element attrs )
 
 This function does the following:
 
@@ -80,7 +82,7 @@ This function does the following:
 
 6.	Returns the new element.
 
-### attrActions
+#### attrActions
 
 Object specifying how attributes are to be transferred:
 

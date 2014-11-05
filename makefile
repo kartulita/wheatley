@@ -4,6 +4,8 @@ TMPDIR=tmp
 TAGDIR=html
 DOCDIR=doc
 
+TITLE=Wheatley
+
 DOCS=$(patsubst $(SRCDIR)/%.md, %.html, $(wildcard $(SRCDIR)/$(DOCDIR)/*.md))
 
 MODULES=$(patsubst $(SRCDIR)/%/module.js, $(OUTDIR)/%.js, $(shell find $(SRCDIR)/ -maxdepth 2 -type f -name 'module.js'))
@@ -45,7 +47,7 @@ bundle: $(BUNDLE)
 modules: $(MODULES)
 	@true
 
-docs: $(DOCS)
+docs: $(DOCDIR)/index.html $(DOCS)
 	@true
 
 deps: | $(NODE_DEPS:%=npm_%)
@@ -97,9 +99,14 @@ $(OUTDIR)/%.js: $(SRCDIR)/%/*.js | npm_deps $(OUTDIR) $(TMPDIR)
 	$(UGLIFY) < $(TEMP).annot > $(TEMP).ugly
 	cp $(TEMP).ugly $@
 
+$(DOCDIR)/index.html: $(DOCS)
+	cat $(sort $^) | build/doc.sh $(TITLE) > $@
+	cp -t $(DOCDIR) build/docpage/*.{css,js}
+
 $(DOCDIR)/%.html: $(SRCDIR)/$(DOCDIR)/%.md | $(DOCDIR)
+	$(eval NAME=$(patsubst $(SRCDIR)/$(DOCDIR)/%.md,%,$<))
 	pandoc --from=markdown_github --to=html < $< > $@
-	build/demo.sh $(SRCDIR) $(DOCDIR) $(patsubst $(SRCDIR)/$(DOCDIR)/%.md,%,$<) $(SRCDIR)/$(DOCDIR)/doc-demos/$(MODULE)
+	build/demo.sh $(SRCDIR) $(DOCDIR) $(NAME) $(SRCDIR)/$(DOCDIR)/doc-demos/$(MODULE)
 
 npm_%: | $(NODE_MODULES)/%
 	$(NODE_INSTALL) $(@:npm_%=%)

@@ -5,12 +5,13 @@ Also see `NAMING`
 If in doubt, follow the kernel-style.  The main exception being that the
 open-brace for JavaScript/C# functions should _always_ be on the same line:
 
-	function myFunction(param1, param2) {
+	function myFunction(param1, param2) {  <-- brace on same line
 		myFunctionBody...
 	}
 
  * TAB indent.  That way, I can have 8-width indent, you can have 4-width indent
- and gnoobs can have their god-forsaken 2-space indent.
+ and gnoobs can have their god-forsaken 2-space indent, simply by setting their
+ editor's tab stop.
 
  * We aren't measured by lines-of-code, so let's not behave like Java devs.
  Opening brace is on SAME line as associated control statement, and
@@ -33,11 +34,15 @@ open-brace for JavaScript/C# functions should _always_ be on the same line:
 		loopCommand();
 	}
 
+ This does not mean that we should cram everything into as few lines as possible
+ though, keep the code readable (but avoid noobish ASCII-art such as aligning
+ parantheses).
+
  * More than 4 levels of indentation?  You should probably rethink your
  design...  Pull big anonymous functions out and name/document them, separate
  big controller into small services/directives.........
 
- * Line length > 80?  Probably fine for JavaScript/C#, but don't exceed 200, and be worried if you exceed 160...
+ * Line length > 80?  Probably fine for JavaScript/C#, but don't exceed 200, and be worried if you exceed 160...  I personally try to wrap lines around 80 columns, and split long lines into sub-expressions.
 
  * Unit tests / mocks: Besides ensuring that your code actually works, these
  also serve as good demonstrations of how to use your code.  A few small tests
@@ -76,7 +81,7 @@ creating duplicate items.
 	function myAsync(params, onSuccess) {
 		myApi.get(params)
 			.success(function (result) {
-				onSuccess(result);
+				onSuccess(process(result));
 			})
 			.error(function (error) {
 				myGlobalErrorHandler('myAsync', error);
@@ -85,15 +90,13 @@ creating duplicate items.
 
 	/* GOOD */
 	function myAsync(params) {
-		var future = $q.defer();
 		return myApi.get(params)
-			.success(function (result) {
-				future.resolve(result);
-			})
-			.error(function (error) {
-				myGlobalErrorHandler('myAsync', error);
-				future.reject(error);
-			})
-		return future.promise;
+			.then(
+				function (result) {
+					return process(result);
+				},
+				function (error) {
+					myGlobalErrorHandler('myAsync', error);
+				});
 	}
 

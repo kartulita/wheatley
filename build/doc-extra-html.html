@@ -1,0 +1,69 @@
+<script src="//cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js"></script>
+<!-- link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css" -->
+<style>
+	p>code {
+		display: inline-block;
+		color: inherit;
+		background: inherit;
+		border: 0;
+		border-radius: 0;
+		margin: 0 0.2em;
+		padding: 0;
+		font-size: 80%;
+		line-height: inherit;
+	}
+	pre>code {
+		font-size: 60%;
+		white-space: pre-wrap;
+		text-indent: 0;
+		background: inherit;
+		border: 0;
+		border-left: 1px solid black;
+		border-right: 1px solid black;
+		border-radius: 1em;
+		padding-left: 1em;
+		margin: 2em 1em;
+	}
+	.token.keyword,
+	.token.class,
+	.token.tag-id,
+	.token.attr-name {
+		font-weight: bold;
+	}
+	.token.keyword,
+	.token.attr-value {
+		color: #07a;
+	}
+	.token.string,
+	.token.attr-name,
+	.token.selector {
+		color: #690;
+	}
+	.token.punctuation {
+		color: #999;
+	}
+	.token.operator {
+		color: #a67f59;
+	}
+	.token.number,
+	.token.tag,
+	.token.property {
+		color: #905;
+	}
+	.token.comment {
+		color: #789;
+	}
+	@media only screen {
+		body {
+			x-max-width: 2000px;
+			x-width: auto;
+		}
+		html {
+			margin: 0 10%;
+		}
+		pre>code {
+			overflow-x: auto;
+			white-space: pre;
+		}
+	}
+</style>
