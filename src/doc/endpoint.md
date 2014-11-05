@@ -217,7 +217,7 @@ for endpoints (to aid debugging), and has the extend/query mechanism for growing
 a hierarchy of endpoints without repeating the base path or common parameters.
 
 The automatic toasting on error was the main reason that I initially developed
-this class.  Additionally, ou can use the `isInvoking()` property to determine
+this class.  Additionally, you can use the `isInvoking()` property to determine
 whether there are any active requests on the endpoint or its descendants.
 
 ## Demo app (TODO list)

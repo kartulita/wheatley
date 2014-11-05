@@ -82,9 +82,9 @@ $(DOCDIR):
 	$(MKDIRP) $(DOCDIR)
 
 tags: | $(TAGDIR)
-	build/html-tags.sh -q $(TAGDIR)/sources.html $(SOURCES:$(SRCDIR)/%=$(PREFIX)%)
-	build/html-tags.sh -q $(TAGDIR)/modules.html $(MODULES:$(OUTDIR)/%=$(PREFIX)%)
-	build/html-tags.sh -q $(TAGDIR)/bundle.html $(PREFIX)$(BUNDLE:$(OUTDIR)/%=%)
+	build/html-tags.pl >$(TAGDIR)/sources.html $(SOURCES:$(SRCDIR)/%=$(PREFIX)%)
+	build/html-tags.pl >$(TAGDIR)/modules.html $(MODULES:$(OUTDIR)/%=$(PREFIX)%)
+	build/html-tags.pl >$(TAGDIR)/bundle.html $(PREFIX)$(BUNDLE:$(OUTDIR)/%=%)
 
 $(BUNDLE): $(MODULES) | npm_deps $(OUTDIR) $(TMPDIR)
 	$(eval TEMP=$(TMPDIR)/$(subst /,_,$@))
