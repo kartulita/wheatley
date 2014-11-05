@@ -39,7 +39,7 @@ function indent {
 }
 
 function nobr {
-	sed -e 's/<br[^>]*>//g'
+	sed -e 's/<br[^>]*>/ /g'
 }
 
 function highlight {
