@@ -27,6 +27,8 @@ function configure {
 
 		'http://chaijs.com/chai.js'
 
+		'https://code.jquery.com/jquery-1.11.1.min.js'
+
 		'http://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.2/js/toastr.min.js'
 		'http://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.2/css/toastr.min.css'
 
@@ -36,13 +38,11 @@ function configure {
 		'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-resource.js'
 		'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-route.js'
 		
-		'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.2/ui-bootstrap.js'
+		'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.2/ui-bootstrap-tpls.js'
 
 		'+http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-mocks.js'
 
 	)
-#		'https://code.jquery.com/jquery-1.11.1.min.js'
-
 
 	# HTML source
 	HTMLHEAD=(
