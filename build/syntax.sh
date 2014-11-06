@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-declare LOOP=0
-
 function fmtOut {
 	while read LINE; do
 	 	echo "$LINE" | perl -pe '
@@ -23,7 +21,7 @@ function check {
 
 function syntaxCheck {
 	echo -e "\e[1mSyntax check starting\e[0m"
-	for SOURCE in "${SOURCES[@]}"; do
+	for SOURCE in "$@"; do
 		echo -e "\e[1;32m * Checking \e[0m$SOURCE"
 		if ! (check "$SOURCE" | fmtOut); then
 			echo -e "   - \e[1;31mFailed: \e[0;37m$SOURCE"
@@ -32,24 +30,15 @@ function syntaxCheck {
 	echo -e "\e[1mSyntax check complete\e[0m"
 }
 
-function doLoop {
-	local LINE=""
-	while ! [ "$LINE" == "q" ]; do
-		clear
-		syntaxCheck
-		read LINE
-	done
-}
-
-if (( "$#" > 0 )) && [ "$1" == "--loop" ]; then
-	LOOP=1
+if (( $# > 0 )) && [ "$1" == "--loop" ]; then
 	shift
-fi
-
-declare -a SOURCES=( "$@" )
-
-if (( LOOP )); then
-	doLoop
+	clear
+	if ( syntaxCheck "$@" ); then
+		read -sn 1 CHAR
+		if ! [ "$CHAR" == "q" ]; then
+			exec "$0" "--loop" "$@"
+		fi
+	fi
 else
-	syntaxCheck
+	syntaxCheck "$@"
 fi

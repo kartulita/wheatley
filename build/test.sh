@@ -27,8 +27,6 @@ function configure {
 
 		'http://chaijs.com/chai.js'
 
-		'https://code.jquery.com/jquery-1.11.1.min.js'
-
 		'http://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.2/js/toastr.min.js'
 		'http://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.2/css/toastr.min.css'
 
@@ -37,9 +35,14 @@ function configure {
 		'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular.js'
 		'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-resource.js'
 		'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-route.js'
+		
+		'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.2/ui-bootstrap.js'
+
 		'+http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-mocks.js'
 
 	)
+#		'https://code.jquery.com/jquery-1.11.1.min.js'
+
 
 	# HTML source
 	HTMLHEAD=(
@@ -78,6 +81,7 @@ function extra {
 
 function dependencies {
 	local FILENAME NOINCLUDE DEPDIR="dep"
+	local -a PIDS=
 	section 'Dependencies'
 	mkdir -p "$OUTDIR/$DEPDIR"
 	for EXT in "${EXTERNALS[@]}"; do
@@ -90,7 +94,7 @@ function dependencies {
 		item "$FILENAME"
 		if ! [ -e "$OUTDIR/$FILENAME" ]; then
 			extra "Downloading..."
-			wget "$EXT" -O "$OUTDIR/$FILENAME" --quiet
+			wget "$EXT" -O "$OUTDIR/$FILENAME" --quiet & PIDS+=( $! )
 		fi
 		if (( INCLUDE )); then
 			if [[ "$FILENAME" =~ \.css$ ]]; then
@@ -100,6 +104,9 @@ function dependencies {
 			fi
 		fi
 	done
+	if (( ${#PIDS[@]} )); then
+		wait ${PIDS[@]} >/dev/null 2>&1 || true
+	fi
 }
 
 function modules {
@@ -151,24 +158,25 @@ function html {
 	mkdir -p "$OUTDIR/$HTMLDIR"
 	FILENAME="$HTMLDIR/index.html"
 	item "$FILENAME"
-	IFS=$'\n' cat > "$OUTDIR/$FILENAME" <<EOF
-	<!DOCTYPE html>
-	<html>
-	<head>
-	${HTMLHEAD[@]}
-	</head>
-	<body>
-	${HTMLBODY[@]}
-	</body>
-	</html>
-EOF
+	local -a HTML=(
+		'<!DOCTYPE html>'
+		'<html>'
+		'<head>'
+		"${HTMLHEAD[@]}"
+		'</head>'
+		'<body>'
+		"${HTMLBODY[@]}"
+		'</body>'
+		'</html>'
+	)
+	printf -- "%s\n" "${HTML[@]}" > "$OUTDIR/$FILENAME"
 }
 
 declare -i PYPID=0
 function startServer {
 	section "Server"
 	cd "$OUTDIR"
-	python2 -m SimpleHTTPServer $PORT >/dev/null & PYPID=$!
+	python2 -m SimpleHTTPServer $PORT >/dev/null 2>&1 & PYPID=$!
 	sleep 0.2
 	if ! kill -s 0 $PYPID; then
 		item "Server failed to start"
@@ -202,7 +210,18 @@ function main {
 	HTMLBODY+=( '<script>mocha.setup("tdd");</script>' )
 	HTMLBODY+=( '<script>window.expect = chai.expect; window.assert = chai.assert; chai.should(); </script>' )
 	HTMLBODY+=( '<script src="dep/angular-mocks.js"></script>' )
+	HTMLBODY+=( '<script>var tests = [];</script>' )
 	tests
+	HTMLBODY+=(
+		'<script>'
+		'	/* Run each angular test with its own injector */'
+		'	tests.forEach(function (test) {'
+		'		test.modules.push("ng");'
+		'		var injector = angular.bootstrap(document.createElement("div"), test.modules);'
+		'		injector.invoke(test.test);'
+		'	});'
+		'</script>'
+	)
 	HTMLBODY+=( '<script>mocha.run();</script>' )
 	html
 

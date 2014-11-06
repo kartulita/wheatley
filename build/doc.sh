@@ -22,6 +22,17 @@ function html_head {
 	done <&3
 }
 
+function demos {
+	echo "<h1>Live demos</h1>"
+	echo "<ul>"
+
+	(cd "$(dirname "$0")/../doc/demos/" && ls -1) | \
+	while read DEMO; do
+		echo "<li><a href=\"demos/$DEMO\">$DEMO</a></li>"
+	done
+	echo "</ul>"
+}
+
 function html_tail {
 	local ECHO=0
 	while read LINE; do
@@ -49,5 +60,6 @@ function highlight {
 (
 	html_head | title
 	cat | nobr | highlight
+	demos
 	html_tail
 ) | indent

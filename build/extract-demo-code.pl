@@ -10,7 +10,7 @@ my $base = shift or die "No target folder specified";
 my $hasheader = false;
 my $demo = false;
 my $line;
-my $quiet = !!$ENV{'QUIET'};
+my $quiet = true;
 
 while ($hasheader or $line = <>) {
 	$_ = $line;

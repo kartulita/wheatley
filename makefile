@@ -67,7 +67,7 @@ test-loop:
 	@build/test.sh --loop || true
 
 clean:
-	$(RMRF) $(OUTDIR) $(TMPDIR) $(TAGDIR) $(DOCDIR) $(DOCSRCDIR)/doc-demos || true
+	$(RMRF) $(OUTDIR) $(TMPDIR) $(TAGDIR) $(DOCDIR) || true
 	
 $(OUTDIR):
 	$(MKDIRP) $(OUTDIR)
@@ -105,8 +105,8 @@ $(DOCDIR)/index.html: $(DOCS)
 
 $(DOCDIR)/%.html: $(DOCSRCDIR)/%.md | $(DOCDIR)
 	$(eval NAME=$(patsubst $(DOCSRCDIR)/%.md,%,$<))
+	build/demo.sh $< $(SRCDIR) $(DOCDIR)/demos/$(NAME)
 	pandoc --from=markdown_github --to=html < $< > $@
-	build/demo.sh $(SRCDIR) $(DOCDIR) $(NAME) $(DOCSRCDIR)/doc-demos/$(MODULE)
 
 npm_%: | $(NODE_MODULES)/%
 	$(NODE_INSTALL) $(@:npm_%=%)
