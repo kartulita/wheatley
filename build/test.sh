@@ -2,38 +2,60 @@
 
 set -euo pipefail
 
-# Move into source directory
-cd "$(dirname "$0")/../src/"
+declare -i PORT=0
+declare SRCDIR OUTDIR
+declare -a FILES= TESTS= EXTERNALS= HTMLHEAD= HTMLBODY=
 
-declare PORT=1337
+function configure {
 
-#declare DIR="$(mktemp -d)"
-declare DIR="/tmp/frontend-tests"
+	PORT=1337
 
-# Source files
-declare -a FILES=( */*.js )
+	cd "$(realpath "$(dirname "$0")/../")"
+	SRCDIR="src"
+	OUTDIR="tmp/tests"
 
-# Tests to include
-declare -a TESTS=( */tests/*.js )
+	# Source files
+	FILES=( "$SRCDIR"/*/*.js )
 
-# External dependencies (to download)
-declare -a EXTERNALS=(
-	'https://github.com/visionmedia/mocha/raw/master/mocha.css'
-	'https://github.com/visionmedia/mocha/raw/master/mocha.js'
+	# Tests to include
+	TESTS=( "$SRCDIR"/*/tests/*.js )
 
-	'http://chaijs.com/chai.js'
+	# External dependencies (to download)
+	EXTERNALS=(
+		'https://github.com/visionmedia/mocha/raw/master/mocha.css'
+		'https://github.com/visionmedia/mocha/raw/master/mocha.js'
 
-	'http://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.2/js/toastr.min.js'
-	'http://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.2/css/toastr.min.css'
+		'http://chaijs.com/chai.js'
 
-	'http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js'
+		'https://code.jquery.com/jquery-1.11.1.min.js'
 
-	'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular.js'
-	'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-resource.js'
-	'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-route.js'
-	'+http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-mocks.js'
+		'http://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.2/js/toastr.min.js'
+		'http://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.2/css/toastr.min.css'
 
-)
+		'http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js'
+
+		'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular.js'
+		'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-resource.js'
+		'http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-route.js'
+		'+http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-mocks.js'
+
+	)
+
+	# HTML source
+	HTMLHEAD=(
+		'<meta charset="utf-8">'
+		'<title>Tests</title>'
+	)
+
+	# HTML source
+	HTMLBODY=(
+		'<div id="debug"></div>'
+		'<div id="mocha"><p><a href=".">Unit tests for Wheatley</a></p></div>'
+		'<div id="messages"></div>'
+		'<div id="fixtures"></div>'
+	)
+
+}
 
 # For sources: module/file-name.js => module_file-name.js
 function makeFileName {
@@ -54,35 +76,21 @@ function extra {
 	echo -e "   \e[0;33m$@\e[0;37m"
 }
 
-# HTML source
-declare HTMLHEAD=(
-	'<meta charset="utf-8">'
-	'<title>Tests</title>'
-)
-
-# HTML source
-declare HTMLBODY=(
-	'<div id="debug"></div>'
-	'<div id="mocha"><p><a href=".">Unit tests for Wheatley</a></p></div>'
-	'<div id="messages"></div>'
-	'<div id="fixtures"></div>'
-)
-
 function dependencies {
-	local FILENAME NOINCLUDE
+	local FILENAME NOINCLUDE DEPDIR="dep"
 	section 'Dependencies'
-	mkdir -p "$DIR/dep"
+	mkdir -p "$OUTDIR/$DEPDIR"
 	for EXT in "${EXTERNALS[@]}"; do
 		INCLUDE=1
 		if [[ "$EXT" =~ ^\+ ]]; then
 			EXT="${EXT:1:${#EXT}}"
 			INCLUDE=0
 		fi
-		FILENAME="dep/$(basename "$EXT")"
+		FILENAME="$DEPDIR/$(basename "$EXT")"
 		item "$FILENAME"
-		if ! [ -e "$DIR/$FILENAME" ]; then
+		if ! [ -e "$OUTDIR/$FILENAME" ]; then
 			extra "Downloading..."
-			wget "$EXT" -O "$DIR/$FILENAME" --quiet
+			wget "$EXT" -O "$OUTDIR/$FILENAME" --quiet
 		fi
 		if (( INCLUDE )); then
 			if [[ "$FILENAME" =~ \.css$ ]]; then
@@ -95,54 +103,54 @@ function dependencies {
 }
 
 function modules {
-	local FILENAME
+	local FILENAME MODDIR="src"
 	section "Module headers"
-	mkdir -p "$DIR/src"
+	mkdir -p "$OUTDIR/$MODDIR"
 	for SRC in "${FILES[@]}"; do
 		if ! [[ "$SRC" =~ module\.js$ ]]; then
 			continue
 		fi
-		FILENAME="src/$(makeFileName "$SRC")"
+		FILENAME="$MODDIR/$(makeFileName "$SRC")"
 		item "$FILENAME"
-		cp "$SRC" "$DIR/$FILENAME"
+		cp "$SRC" "$OUTDIR/$FILENAME"
 		HTMLBODY+=( '<script src="'"$FILENAME"'"></script>' )
 	done
 	HTMLBODY+=( "<script>mocha.setup('bdd');</script>" )
 }
 
 function sources {
-	local FILENAME
+	local FILENAME SRCDIR="src"
 	section "Sources"
-	mkdir -p "$DIR/src"
+	mkdir -p "$SRCDIR/$SRCDIR"
 	for SRC in "${FILES[@]}"; do
 		if [[ "$SRC" =~ module\.js$ ]]; then
 			continue
 		fi
-		FILENAME="src/$(makeFileName "$SRC")"
+		FILENAME="$SRCDIR/$(makeFileName "$SRC")"
 		item "$FILENAME"
-		cp "$SRC" "$DIR/$FILENAME"
+		cp "$SRC" "$OUTDIR/$FILENAME"
 		HTMLBODY+=( '<script src="'"$FILENAME"'"></script>' )
 	done
 }
 
 function tests {
-	local FILENAME
+	local FILENAME TESTDIR="test"
 	section "Tests"
-	mkdir -p "$DIR/test"
+	mkdir -p "$OUTDIR/$TESTDIR"
 	for TEST in "${TESTS[@]}"; do
-		FILENAME="test/$(makeFileName "$(echo "$TEST" | sed -r 'y/\//_/')" | sed -r 's/\._//g')"
+		FILENAME="$TESTDIR/$(makeFileName "$(echo "$TEST" | sed -r 'y/\//_/')" | sed -r 's/\._//g')"
 		item "$FILENAME"
-		cp "$TEST" "$DIR/$FILENAME"
+		cp "$TEST" "$OUTDIR/$FILENAME"
 		HTMLBODY+=( '<script src="'"$FILENAME"'"></script>' )
 	done
 }
 
 function html {
-	local FILENAME
+	local FILENAME HTMLDIR="."
 	section "Html interface"
-	FILENAME="index.html"
-	item "$DIR/$FILENAME"
-	IFS=$'\n' cat > "$DIR/$FILENAME" <<EOF
+	FILENAME="$HTMLDIR/index.html"
+	item "$OUTDIR/$FILENAME"
+	IFS=$'\n' cat > "$OUTDIR/$FILENAME" <<EOF
 	<!DOCTYPE html>
 	<html>
 	<head>
@@ -155,22 +163,34 @@ function html {
 EOF
 }
 
-declare PYPID=0
-
+declare -i PYPID=0
 function startServer {
 	section "Server"
-	cd "$DIR"
-	python2 -m SimpleHTTPServer $PORT >/dev/null 2>/dev/null & PYPID=$!
+	cd "$OUTDIR"
+	python2 -m SimpleHTTPServer $PORT >/dev/null & PYPID=$!
+	sleep 0.2
+	if ! kill -s 0 $PYPID; then
+		item "Server failed to start"
+		exit 1
+	fi
 	item "Listening on port $PORT"
 }
 
 function stopServer {
-	item "Stopping server"
-	kill $PYPID
-	item "Server stopped"
+	if (( PYPID )) && kill -s 0 $PYPID >/dev/null 2>&1; then
+		item "Stopping server"
+		kill $PYPID >/dev/null 2>&1 && wait $PYPID >/dev/null 2>&1 || true
+		item "Server stopped"
+	fi
 }
 
 function main {
+
+	configure
+
+	test -d "$SRCDIR"
+	mkdir -p "$OUTDIR"
+
 	dependencies
 	modules
 	sources
@@ -180,24 +200,26 @@ function main {
 	tests
 	HTMLBODY+=( '<script>mocha.run();</script>' )
 	html
+
 	startServer
 	trap stopServer EXIT
-	# wait
-	read LINE
-}
 
-function loop {
-	while clear; do
-		echo -e "\e[1;37mTest loop.  Press ENTER to re-build tests, Ctrl+C to quit."
-		( main )
-	done
-	exit 0
+	read -sn 1 CHAR
+	stopServer
+
+	if [ "$CHAR" == "q" ]; then
+		exit 127
+	fi
 }
 
 if (( $# == 0 )); then
-	main
+	main || true
 elif [ "$1" == "--loop" ]; then
-	loop
+	clear
+	echo -e "\e[1;37mTest loop.  Press 'q' or Ctrl+C to quit, any key to re-build tests.\e[0m"
+	if ( main ); then
+		exec "$0" "$@"
+	fi
 else
 	echo "Unknown parameter: $@"
 	exit 1
