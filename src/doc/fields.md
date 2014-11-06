@@ -127,16 +127,26 @@ Dependencies: utils, directive-proxy, fields
 	function demoController($scope) {
 
 		$scope.model = {
-			gender: 'M',
-			country: 44,
+			people: [
+				{ name: 'Mark', gender: 'M',country: 44  },
+				{ name: 'Mari', gender: 'F', country: 372 },
+				{ name: 'Rob', gender: 'D', country: 370 },
+				{ name: 'Jaari', gender: 'M', country: 358 },
+				{ name: 'Celia', gender: 'F', country: 33 },
+				{ name: 'Darth', gender: 'M', country: 380 }
+			],
 			genders: [],
 			countries: [372, 358, 380, 354, 370]
 		};
 
+		$scope.person = $scope.model.people[0];
+
 		$scope.data = {
 			genders: [
 				{ title: 'Male', value: 'M' },
-				{ title: 'Female', value: 'F' }
+				{ title: 'Female', value: 'F' },
+				/* South park reference */
+				{ title: 'Dolphin', value: 'D' }
 			],
 			countries: [
 				{ title: 'Estonia', value: 372 },
@@ -150,6 +160,10 @@ Dependencies: utils, directive-proxy, fields
 				{ title: 'Ukraine', value: 380 },
 				{ title: 'Belgium', value: 32 }
 			]
+		};
+
+		$scope.config = {
+			showMulti: false
 		};
 
 	}
@@ -187,6 +201,8 @@ Dependencies: utils, directive-proxy, fields
 		<script src="fields/checkbox-group-directive.js"></script>
 		<script src="fields/text-box-directive.js"></script>
 		<script src="fields/autocomplete-directive.js"></script>
+		<script src="fields/boolean-facade.js"></script>
+		<script src="fields/checkbox-directive.js"></script>
 		<!-- Local -->
 		<script src="app.js"></script>
 		<link rel="stylesheet" href="style.css">
@@ -195,20 +211,27 @@ Dependencies: utils, directive-proxy, fields
 		<form class="smart-green">
 			<h1>Experiment</h1>
 			<fieldset>
+				<legend>People to edit</legend>
+				<label>Select person:
+					<select ng-options="person as person.name for person in model.people" ng-model="person" size="4"></select>
+				</label>
+			</fieldset>
+			<fieldset>
 				<legend>Field purpose specified only</legend>
 				<div class="cols">
 					<div>
 						<fieldset>
 							<legend>Choice</legend>
-								<field:auto title="Gender" x-purpose="choice" ng-model="model.gender" x-choices="data.genders"></field:auto>
-								<field:auto title="Country" x-purpose="choice" ng-model="model.country" x-choices="data.countries"></field:auto>
+							<field:auto title="Gender" x-purpose="choice" ng-model="person.gender" x-choices="data.genders"></field:auto>
+							<field:auto title="Country" x-purpose="choice" ng-model="person.country" x-choices="data.countries"></field:auto>
+							<field:auto title="Show multi-choice demos" x-purpose="boolean" ng-model="config.showMulti"></field:auto>
 						</fieldset>
-						<fieldset>
+						<fieldset ng-show="config.showMulti">
 							<legend>Multichoice</legend>
 							<field:auto title="Genders with hint 'many'" x-purpose="multichoice" ng-model="model.genders" x-choices="data.genders" x-hints="optional,many" size="2"></field:auto>
 						</fieldset>
 					</div>
-					<fieldset>
+					<fieldset ng-show="config.showMulti">
 						<legend>Multichoice</legend>
 						<field:auto title="Genders" x-purpose="multichoice" ng-model="model.genders" x-choices="data.genders" x-hints="optional"></field:auto>
 						<field:auto title="Countries" x-purpose="multichoice" ng-model="model.countries" x-choices="data.countries"></field:auto>
@@ -217,17 +240,21 @@ Dependencies: utils, directive-proxy, fields
 			</fieldset>
 			<fieldset>
 				<legend>Specify field purpose with hints</legend>
-				<field:auto title="Gender with hint 'many'" x-purpose="choice" x-hints="many" ng-model="model.gender" x-choices="data.genders"></field:auto>
-				<field:auto title="Country with hint 'not many'" x-purpose="choice" x-hints="not many" ng-model="model.country" x-choices="data.countries"></field:auto>
-				<field:auto title="Country with hint 'custom'" x-purpose="choice" x-hints="many,custom" ng-model="model.country" x-choices="data.countries"></field:auto>
+				<field:auto title="Gender with hint 'many'" x-purpose="choice" x-hints="many" ng-model="person.gender" x-choices="data.genders"></field:auto>
+				<field:auto title="Country with hint 'not many'" x-purpose="choice" x-hints="not many" ng-model="person.country" x-choices="data.countries"></field:auto>
+				<field:auto title="Country with hint 'custom'" x-purpose="choice" x-hints="many,custom" ng-model="person.country" x-choices="data.countries"></field:auto>
 			</fieldset>
 			<fieldset>
 				<legend>Request specific implementations</legend>
-				<field:auto title="Gender as 'text-box'" x-purpose="text-box" ng-model="model.gender" x-choices="data.genders"></field:auto>
-				<field:auto title="Country as 'autocomplete'" x-purpose="autocomplete" ng-model="model.country" x-choices="data.countries"></field:auto>
+				<field:auto title="Gender as 'text-box'" x-purpose="text-box" ng-model="person.gender" x-choices="data.genders"></field:auto>
+				<field:auto title="Country as 'autocomplete'" x-purpose="autocomplete" ng-model="person.country" x-choices="data.countries"></field:auto>
 			</fieldset>
 			<fieldset>
 				<legend>Model</legend>
+				<pre>{{ model | json }}</pre>
+			</fieldset>
+			<fieldset>
+				<legend>Person</legend>
 				<pre>{{ model | json }}</pre>
 			</fieldset>
 			<fieldset>
