@@ -205,7 +205,7 @@ Dependencies: utils, directive-proxy, fields
 						</fieldset>
 						<fieldset>
 							<legend>Multichoice</legend>
-							<field:auto title="Genders" x-purpose="multichoice" ng-model="model.genders" x-choices="data.genders" x-hints="optional,many" size="2"></field:auto>
+							<field:auto title="Genders with hint 'many'" x-purpose="multichoice" ng-model="model.genders" x-choices="data.genders" x-hints="optional,many" size="2"></field:auto>
 						</fieldset>
 					</div>
 					<fieldset>
