@@ -67,9 +67,7 @@ test-loop:
 	@build/test.sh --loop || true
 
 clean:
-	$(RMF) $(OUTDIR)/*.js $(TMPDIR)/* $(TAGS:%=$(TAGDIR)/%.html) $(DOCS)
-	$(RMRF) $(DOCDIR)
-	$(RMDIR) $(OUTDIR) $(TMPDIR) $(TAGDIR) $(DOCDIR) $(DOCSRCDIR)/doc-demos || true
+	$(RMRF) $(OUTDIR) $(TMPDIR) $(TAGDIR) $(DOCDIR) $(DOCSRCDIR)/doc-demos || true
 	
 $(OUTDIR):
 	$(MKDIRP) $(OUTDIR)
