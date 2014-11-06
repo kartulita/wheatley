@@ -12,7 +12,7 @@ function configure {
 
 	cd "$(realpath "$(dirname "$0")/../")"
 	SRCDIR="src"
-	OUTDIR="tmp/tests"
+	OUTDIR="out/tests"
 
 	# Source files
 	FILES=( "$SRCDIR"/*/*.js )
@@ -148,8 +148,9 @@ function tests {
 function html {
 	local FILENAME HTMLDIR="."
 	section "Html interface"
+	mkdir -p "$OUTDIR/$HTMLDIR"
 	FILENAME="$HTMLDIR/index.html"
-	item "$OUTDIR/$FILENAME"
+	item "$FILENAME"
 	IFS=$'\n' cat > "$OUTDIR/$FILENAME" <<EOF
 	<!DOCTYPE html>
 	<html>
@@ -174,6 +175,7 @@ function startServer {
 		exit 1
 	fi
 	item "Listening on port $PORT"
+	item "Point your browser to $(hostname -s):$PORT to run the tests"
 }
 
 function stopServer {
@@ -187,6 +189,9 @@ function stopServer {
 function main {
 
 	configure
+
+	echo -e "\e[1;37mOutput directory: $OUTDIR\e[0m"
+	echo ""
 
 	test -d "$SRCDIR"
 	mkdir -p "$OUTDIR"
@@ -217,6 +222,7 @@ if (( $# == 0 )); then
 elif [ "$1" == "--loop" ]; then
 	clear
 	echo -e "\e[1;37mTest loop.  Press 'q' or Ctrl+C to quit, any key to re-build tests.\e[0m"
+	echo ""
 	if ( main ); then
 		exec "$0" "$@"
 	fi
