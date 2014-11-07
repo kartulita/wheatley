@@ -128,7 +128,7 @@ function modules {
 function sources {
 	local FILENAME SRCDIR="src"
 	section "Sources"
-	mkdir -p "$SRCDIR/$SRCDIR"
+	mkdir -p "$OUTDIR/$SRCDIR"
 	for SRC in "${FILES[@]}"; do
 		if [[ "$SRC" =~ module\.js$ ]]; then
 			continue
