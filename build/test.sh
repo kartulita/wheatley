@@ -172,13 +172,23 @@ function html {
 	printf -- "%s\n" "${HTML[@]}" > "$OUTDIR/$FILENAME"
 }
 
-declare -i PYPID=0
+declare -i SERVERPID=0
 function startServer {
 	section "Server"
 	cd "$OUTDIR"
-	python2 -m SimpleHTTPServer $PORT >/dev/null 2>&1 & PYPID=$!
+	if which mocha-server >/dev/null 2>&1 && false; then
+		# TODO: Mocha server
+		# mocha-server blah blah >/dev/null 2>&1 & SERVERPID=$!
+		true;
+	elif which http-server >/dev/null 2>&1; then
+		# Prefer node sever over python
+		http-server ./ -p $PORT -s -i0 & SERVERPID=$!
+	else
+		# Python server appends / to URLs via 301, wrecking query strings and breaking grep
+		python2 -m SimpleHTTPServer $PORT >/dev/null 2>&1 & SERVERPID=$!
+	fi
 	sleep 0.2
-	if ! kill -s 0 $PYPID; then
+	if ! kill -s 0 $SERVERPID; then
 		item "Server failed to start"
 		exit 1
 	fi
@@ -187,9 +197,9 @@ function startServer {
 }
 
 function stopServer {
-	if (( PYPID )) && kill -s 0 $PYPID >/dev/null 2>&1; then
+	if (( SERVERPID )) && kill -s 0 $SERVERPID >/dev/null 2>&1; then
 		item "Stopping server"
-		kill $PYPID >/dev/null 2>&1 && wait $PYPID >/dev/null 2>&1 || true
+		kill $SERVERPID >/dev/null 2>&1 && wait $SERVERPID >/dev/null 2>&1 || true
 		item "Server stopped"
 	fi
 }
@@ -208,18 +218,55 @@ function main {
 	modules
 	sources
 	HTMLBODY+=( '<script>mocha.setup("tdd");</script>' )
-	HTMLBODY+=( '<script>window.expect = chai.expect; window.assert = chai.assert; chai.should(); </script>' )
+	HTMLBODY+=(
+		'<script>'
+		'	window.expect = chai.expect;'
+		'	window.assert = chai.assert;'
+		'	/* chai.should(); */'
+		'</script>'
+	)
 	HTMLBODY+=( '<script src="dep/angular-mocks.js"></script>' )
 	HTMLBODY+=( '<script>var tests = [];</script>' )
 	tests
 	HTMLBODY+=(
 		'<script>'
+		'(function () {'
+		'	/* Resolve inter-test dependencies */'
+		'	var groups = _(tests).chain()'
+		'		.groupBy("group")'
+		'		.pairs()'
+		'		.map(function (kv) { return { name: kv[0], tests: resolve(kv[1]) }; })'
+		'		.value();'
+		'	function resolve(unordered) {'
+		'		var order_cycles = 100;'
+		'		var ordered = [];'
+		'		while (unordered.length) {'
+		'			unordered = unordered.filter(function (test) {'
+		'				var after = test.after;'
+		'				if (_(after).every(function (dep) { return _(ordered).findWhere({ name: dep }); })) {'
+		'					ordered.push(test);'
+		'					return false;'
+		'				} else {'
+		'					return true;'
+		'				}'
+		'			});'
+		'			if (order_cycles-- === 0) {'
+		'				throw new Error("Failed to resolve test inter-dependencies");'
+		'			}'
+		'		}'
+		'		return ordered;'
+		'	}'
 		'	/* Run each angular test with its own injector */'
-		'	tests.forEach(function (test) {'
-		'		test.modules.push("ng");'
-		'		var injector = angular.bootstrap(document.createElement("div"), test.modules);'
-		'		injector.invoke(test.test);'
+		'	groups.forEach(function (group) {'
+		'		describe("Test group: " + (group.name || "(no name)"), function () {'
+		'			group.tests.forEach(function (test) {'
+		'				test.modules.push("ng");'
+		'				var injector = angular.bootstrap(document.createElement("div"), test.modules);'
+		'				injector.invoke(test.test);'
+		'			});'
+		'		});'
 		'	});'
+		'})();'
 		'</script>'
 	)
 	HTMLBODY+=( '<script>mocha.run();</script>' )
