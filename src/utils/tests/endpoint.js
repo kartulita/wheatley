@@ -1,4 +1,8 @@
-tests.push({ modules: ['utils', 'ngMock'], test: function ($httpBackend, Endpoint) {
+tests.push({
+	name: 'endpoint',
+	group: 'api',
+	modules: ['utils', 'ngMock'],
+	test: function ($httpBackend, Endpoint) {
 
 	describe('Endpoint', function () {
 
