@@ -36,8 +36,7 @@ RMDIR=rmdir --ignore-fail-on-non-empty --
 SHELL=bash
 .SHELLFLAGS=-euo pipefail -c
 
-.PHONY: all bundle modules docs clean deps npm_deps tags syntax test test-loop \
-	$(NODE_DEPS:%=npm_%)
+.PHONY: all bundle modules docs clean serve deps npm_deps tags syntax test test-loop
 
 all: bundle modules docs tags
 	@true
@@ -68,6 +67,9 @@ test-loop:
 
 clean:
 	$(RMRF) $(OUTDIR) $(TMPDIR) $(TAGDIR) $(DOCDIR) || true
+
+serve:
+	http-server ./ -p 8000 -s -i0 >/dev/null 2>&1 &
 	
 $(OUTDIR):
 	$(MKDIRP) $(OUTDIR)
