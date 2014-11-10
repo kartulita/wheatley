@@ -72,7 +72,6 @@
 	}
 
 	function simpleUnparser(tree, language) {
-		var result = [];
 		return unparseNodes(tree, language);
 
 		function unparseNodes(nodes, phrases) {

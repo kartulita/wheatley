@@ -50,7 +50,6 @@
 					return undefined;
 				}
 				var matchMaps = comprehensionParser.matchMaps;
-				var result = {};
 
 				return _(matchMaps).reduce(function (result, indices, name) {
 					result[name] = getCapture(name, indices);

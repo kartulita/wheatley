@@ -51,8 +51,8 @@ modules: $(MODULES)
 docs: $(DOCDIR)/index.html $(DOCS)
 	@true
 
-deps: | $(NODE_DEPS:%=npm_%)
-	@true
+deps:
+	$(NODE_INSTALL) $(NODE_DEPS)
 
 syntax:
 	@build/syntax.sh $(SOURCES)
@@ -107,6 +107,3 @@ $(DOCDIR)/%.html: $(DOCSRCDIR)/%.md | $(DOCDIR)
 	$(eval NAME=$(patsubst $(DOCSRCDIR)/%.md,%,$<))
 	build/demo.sh $< $(SRCDIR) $(DOCDIR)/demos/$(NAME)
 	pandoc --from=markdown_github --to=html < $< > $@
-
-npm_%: | $(NODE_MODULES)/%
-	$(NODE_INSTALL) $(@:npm_%=%)
