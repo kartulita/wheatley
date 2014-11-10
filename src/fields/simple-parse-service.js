@@ -1,14 +1,20 @@
-(function (angular) {
+(function (angular, _) {
 	'use strict';
 
 	angular.module('fields')
 		.factory('simpleParseService', simpleParseService);
 
 	function simpleParseService() {
+		simpleParser.parse = simpleParser;
+		simpleParser.unparse = simpleUnparser;
 		return simpleParser;
 	}
 
-	/* Parses a simple expresion as defined by the language specified */
+	/*
+	 * Parses a simple expresion as defined by the language specified
+	 *
+	 * Useful for creating simple, non-recursive domain specific languages.
+	 */
 	function simpleParser(expr, language) {
 		var i = 0;
 		return getGroup({ name: 'result', start: null, end: null, subgroups: language });
@@ -65,4 +71,34 @@
 		}
 	}
 
-})(window.angular);
+	function simpleUnparser(tree, language) {
+		var result = [];
+		return unparseNodes(tree, language);
+
+		function unparseNodes(nodes, phrases) {
+			return _(nodes).map(function (node) {
+				return unparseNode(node, phrases);
+			}).join('');
+		}
+
+		function unparseNode(node, phrases) {
+			if (node.type === 'text') {
+				return node.value;
+			} else {
+				var block = _(phrases).findWhere({ name: node.type });
+				if (block.start === block.end) {
+					return block.start;
+				} else {
+					if (!block) {
+						throw new Error('Unknown phrase type: ' + node.type);
+					}
+					return block.start +
+						unparseNodes(node.value, block.subgroups) +
+						block.end;
+				}
+			}
+		}
+
+	}
+
+})(window.angular, window._);
