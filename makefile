@@ -15,7 +15,7 @@ SOURCES=$(shell find $(SRCDIR)/ -type f -name '*.js' -not -path '*/tests/*' -not
 
 BUNDLE=$(OUTDIR)/bundle.js
 
-export NODE_DEPS=ng-annotate uglify-js
+export NODE_DEPS=ng-annotate uglify-js http-server
 export NODE_INSTALL=npm install -g
 
 export NGANNOTATE=ng-annotate --add --single_quotes -
