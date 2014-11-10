@@ -31,13 +31,13 @@
 			var comp = compParser(expr);
 			fillDefaults(comp);
 			var listGetter = $parse(comp.source);
+			/* Parse expressions and store accessor functions */
 			var params = {
 				group: get(comp.group),
 				label: get(comp.label),
 				select: get(comp.select),
 				memo: get(comp.memo),
 			};
-			getItems.equals = isEqualTo;
 			return getItems;
 			/* Gets the items in a normalized form */
 			function getItems(scope) {
@@ -52,9 +52,20 @@
 						value: value
 					};
 				});
+				items.invalid = false;
+				items.oninvalidate = null;
+				scope.$watch(comp.source, function () {
+					items.invalid = true;
+					if (items.oninvalidate) {
+						items.oninvalidate();
+					}
+				});
 				return items;
 			}
-			/* Evaluates an expression, given a scope+key+value */
+			/*
+			 * Returns a function that evaluates an expression.  The resulting
+			 * function takes the following parameters: scope, key, value
+			 */
 			function get(expr) {
 				var parsed = $parse(expr);
 				return function (scope, key, value) {
