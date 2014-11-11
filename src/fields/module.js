@@ -1,6 +1,6 @@
 (function (angular) {
 	'use strict';
 
-	angular.module('fields', ['utils', 'directive-proxy', 'ui.bootstrap']);
+	angular.module('fields', ['directive-proxy', 'parsers', 'ui.bootstrap']);
 
 })(window.angular);

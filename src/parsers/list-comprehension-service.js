@@ -1,7 +1,7 @@
-(function (angular) {
+(function (angular, _) {
 	'use strict';
 
-	angular.module('fields')
+	angular.module('parsers')
 		.factory('listComprehensionService', listComprehensionService);
 
 	/*
@@ -123,4 +123,4 @@
 
 	}
 
-})(window.angular);
+})(window.angular, window._);

@@ -1,7 +1,7 @@
-(function (angular) {
+(function (angular, _) {
 	'use strict';
 
-	angular.module('fields')
+	angular.module('parsers')
 		.factory('comprehensionLanguage', comprehensionLanguage)
 		.factory('comprehensionService', comprehensionService)
 		;
@@ -169,4 +169,4 @@
 		}
 	}
 
-})(window.angular);
+})(window.angular, window._);

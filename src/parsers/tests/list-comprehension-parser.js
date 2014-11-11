@@ -1,7 +1,7 @@
 tests.push({
 	name: 'list-comprehension-parser',
-	group: 'parsers',
-	modules: ['fields'],
+	group: 'Parsers',
+	modules: ['parsers'],
 	after: ['comprehension-parser'],
 	test: function (listComprehensionService) {
 

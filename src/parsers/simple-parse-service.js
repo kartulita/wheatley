@@ -1,7 +1,7 @@
 (function (angular, _) {
 	'use strict';
 
-	angular.module('fields')
+	angular.module('parsers')
 		.factory('simpleParseService', simpleParseService);
 
 	function simpleParseService() {

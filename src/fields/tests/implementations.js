@@ -1,6 +1,6 @@
 tests.push({
 	name: 'autocomplete',
-	group: 'implementations',
+	group: 'Implementations',
 	modules: ['fields'],
 	test: function ($rootScope, $compile) {
 

@@ -1,7 +1,7 @@
 tests.push({
 	name: 'simple-parser',
-	group: 'parsers',
-	modules: ['fields'],
+	group: 'Parsers',
+	modules: ['parsers'],
 	test: function (simpleParseService) {
 
 	describe('Simple parser', function () {

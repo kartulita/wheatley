@@ -1,4 +1,4 @@
-(function (angular) {
+(function (angular, _) {
 	'use strict';
 
 	angular.module('fields')
@@ -49,4 +49,4 @@
 		}
 	}
 
-})(window.angular);
+})(window.angular, window._);
