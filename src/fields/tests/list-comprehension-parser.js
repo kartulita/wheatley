@@ -131,6 +131,21 @@ tests.push({
 
 		});
 
+		/*it('Log the regular expression to the console for your entertainment', function () {
+			var parser = listComprehensionService.test.compile().parser;
+
+			console.info('Comprehension parser');
+			console.info('Regex (' + parser.regex.toString().length + ' chars)', parser.regex);
+			console.info('Capture group to named capture mapping table', _(parser.matchMaps)
+				.reduce(function (ar, values, key) {
+					values.forEach(function (value) {
+						ar[value] = key;
+					});
+					return ar;
+				}, ['(n/a)']));
+
+		});*/
+
 	});
 
 }});

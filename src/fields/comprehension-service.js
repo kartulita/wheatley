@@ -41,6 +41,11 @@
 		function generateComprehensionParser(comprehension) {
 			var parseTree = parseComprehensionLanguage(comprehension);
 			var comprehensionParser = generateComprehensionRegex(parseTree);
+			
+			if (window.expect) {
+				parseComprehension.parser = comprehensionParser;
+			}
+
 			return parseComprehension;
 
 			/* Apply the comprehension regex and pack the results */
@@ -91,13 +96,8 @@
 			};
 			var captureIndex = 0;
 			var matchMaps = {};
-			var rx = '';
-			rx += '^\\s*';
-			rx += group(root);
-			rx += '\\s*$';
-			rx = rx
-				.replace(/(\\s\*){2,}/g, '\\s*')
-				.replace(/(\\b){2,}/g, '\\b');
+			/* Match entire string but allow whitespace at the ends */
+			var rx = '^\\s*' + group(root) + '\\s*$';
 			return {
 				regex: new RegExp(rx, 'i'),
 				matchMaps: matchMaps
@@ -115,6 +115,10 @@
 	
 			/* Output optional group or choice group */
 			function options(subexpr) {
+				/*
+				 * Non-capturing optional group unless it contains a "choice"
+				 * entity as an immediate child token.
+				 */
 				var isChoice = subexpr
 					.some(function (expr) { return expr.type === 'choice'; });
 				return group(subexpr) + (isChoice ? '' : '?');
@@ -122,6 +126,11 @@
 
 			/* Separate choices */
 			function choice() {
+				/*
+				 * This character serves the same purpose in regular expressions
+				 * as it does in comprehension expressions - which makes the
+				 * implementation really really easy.
+				 */
 				return '|';
 			}
 
@@ -131,12 +140,27 @@
 				if (!_(matchMaps).has(name)) {
 					matchMaps[name] = [];
 				}
+				/*
+				 * We create two capture groups in the regex:
+				 *   Bare identifier: \b(\S+)
+				 *   Braced identifier: (?:{)([^}]+)(?:})
+				 */
 				matchMaps[name].push(++captureIndex);
-				return '\\b(\\S+)';
+				matchMaps[name].push(++captureIndex);
+				return '(?:(?:{)([^}]+)(?:})|\\b(\\S+))';
 			}
 
 			/* Output text */
 			function text(val) {
+				/*
+				 * We create a non-capturing section which captures the
+				 * non-whitespace content of the string exactly, and merely
+				 * requires one or more whitespace characters for each whitespace
+				 * section of the string.
+				 *
+				 * Whitespace at the ends is ignored, since we join blocks with
+				 * optional whitespace matcher (\s*).
+				 */
 				return val
 					.trim()
 					.replace(/[\^\$\.\+\*\?\[\]\(\)\|]/g, '\\$&')

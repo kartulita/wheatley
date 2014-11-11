@@ -151,7 +151,7 @@ tests.push({
 
 		describe('One choice from a set must be specified', function () {
 
-				it('Parses correctly when choice is specified', function () {
+				it('Parses correctly when required choice is specified', function () {
 					var comp = 'test [{a}|{a} and {b}]';
 					var parser = comprehensionService(comp);
 					var expr = 'test alpha and beta';
@@ -160,7 +160,7 @@ tests.push({
 					expect(parsed.b).to.equal('beta');
 				});
 
-				it('Returns undefined when choice is not specified', function () {
+				it('Returns undefined when required choice is not specified', function () {
 					var comp = 'test [{a}|{a} and {b}]';
 					var parser = comprehensionService(comp);
 					var expr = 'test';
@@ -172,7 +172,7 @@ tests.push({
 
 		describe('Choice in an option block is optional', function () {
 
-				it('Parses correctly when choice is specified', function () {
+				it('Parses correctly when optional choice is specified', function () {
 					var comp = 'test [[{a}|{a} and {b}]]';
 					var expr = 'test alpha and beta';
 					var parser = comprehensionService(comp);
@@ -181,7 +181,7 @@ tests.push({
 					expect(parsed.b).to.equal('beta');
 				});
 
-				it('Returns a result when choice is not specified', function () {
+				it('Returns a result when optional choice is not specified', function () {
 					var comp = 'test [[{a}|{a} and {b}]]';
 					var expr = 'test';
 					var parser = comprehensionService(comp);
@@ -210,6 +210,37 @@ tests.push({
 				expect(parsed).to.not.equal(undefined);
 				expect(parsed.a).to.equal(undefined);
 				expect(parsed.b).to.equal(undefined);
+			});
+
+		});
+
+		describe('Brace-grouped captures', function () {
+
+			it('Parses braced group and removes braces', function () {
+				var comp = '{capture}';
+				var expr = '{value}';
+				var parser = comprehensionService(comp);
+				var parsed = parser(expr);
+				expect(parsed).to.not.equal(undefined);
+				expect(parsed.capture).to.equal('value');
+			});
+
+			it('Parses braced group containing whitespace and removes braces', function () {
+				var comp = '{capture}';
+				var expr = '{func(item.id, item.text)}';
+				var parser = comprehensionService(comp);
+				var parsed = parser(expr);
+				expect(parsed).to.not.equal(undefined);
+				expect(parsed.capture).to.equal('func(item.id, item.text)');
+			});
+
+			it('Parses braced group containing whitespace and "next" text block and removes braces', function () {
+				var comp = '{capture} as something';
+				var expr = '{func(item.id, "as crazy as something gets")} as something';
+				var parser = comprehensionService(comp);
+				var parsed = parser(expr);
+				expect(parsed).to.not.equal(undefined);
+				expect(parsed.capture).to.equal('func(item.id, "as crazy as something gets")');
 			});
 
 		});
