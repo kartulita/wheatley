@@ -13,6 +13,7 @@
 		var compParser = comprehensionService(compSyntax);
 
 		/* Expose extra functions if Chai is detected */
+
 		if (window.expect || Object.prototype.should) {
 			comprehend.test = {
 				compile: function () {
@@ -30,38 +31,75 @@
 		function comprehend(expr) {
 			var comp = compParser(expr);
 			fillDefaults(comp);
-			var listGetter = $parse(comp.source);
-			/* Parse expressions and store accessor functions */
+
+			/* Function(scope) which gets the item list */
+			var sourceGetter = $parse(comp.source);
+
+			/*
+			 * Parse mapping expressions and store accessors as
+			 * Function(scope, key, value)
+			 */
 			var params = {
 				group: get(comp.group),
 				label: get(comp.label),
 				select: get(comp.select),
 				memo: get(comp.memo),
 			};
-			return getItems;
+
+			return interrogate;
+
 			/* Gets the items in a normalized form */
-			function getItems(scope) {
-				var list = listGetter(scope);
-				var items = _(list).map(function (value, key) {
-					return {
-						select: params.select(key, value),
-						label: params.label(key, value),
-						memo: params.memo(key, value),
-						group: params.group(key, value),
-						key: key,
-						value: value
-					};
-				});
-				items.invalid = false;
-				items.oninvalidate = null;
-				scope.$watch(comp.source, function () {
-					items.invalid = true;
-					if (items.oninvalidate) {
-						items.oninvalidate();
+			function interrogate(scope) {
+				var result = {
+					items: [],
+					oninvalidate: null
+				};
+
+				/* $watch(..., ..., true) performs a slow but deep watch */
+				scope.$watch(comp.source, invalidate, true);
+
+				/* Populate the item list */
+				refreshItems();
+				
+				return result;
+
+				/* Underlying dataset changed */
+				function invalidate() {
+					refreshItems();
+					if (result.oninvalidate) {
+						result.oninvalidate();
 					}
-				});
-				return items;
+				}
+
+				/* Refreshes the item list (in-place so by-ref watches work) */
+				function refreshItems() {
+					result.items.length = 0;
+					var newItems = getItems(scope);
+					for (var i = 0; i < newItems.length; i++) {
+						result.items.push(newItems[i]);
+					}
+				}
+
 			}
+
+			/*
+			 * Gets the items from the source and maps them as specified by
+			 * the comprehension expression
+			 */
+			function getItems(scope) {
+				return _(sourceGetter(scope))
+					.map(function (value, key) {
+						return {
+							select: params.select(scope, key, value),
+							label: params.label(scope, key, value),
+							memo: params.memo(scope, key, value),
+							group: params.group(scope, key, value),
+							key: key,
+							value: value
+						};
+					});
+			}
+
 			/*
 			 * Returns a function that evaluates an expression.  The resulting
 			 * function takes the following parameters: scope, key, value
@@ -77,6 +115,7 @@
 					return parsed(scope, locals);
 				};
 			}
+
 		}
 
 		/* Fill defaults in pasred comprehension */

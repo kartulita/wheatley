@@ -14,6 +14,8 @@
 				'</select>',
 			scope: {
 				choices: '='
+			},
+			link: function (scope, element, attrs) {
 			}
 		};
 	}
