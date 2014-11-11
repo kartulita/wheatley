@@ -1,19 +1,16 @@
-(function (angular) {
+(function (angular, toastr) {
 	'use strict';
 
 	angular.module('utils')
-		.factory('toastr', toastrProxy)
 		.factory('toastService', toastService)
+		.run(function () {		
+			if (!toastr) {
+				throw new Error('Toastr.js required');
+			}
+		})
 		;
-		
-	function toastrProxy($window) {
-		if (!$window.toastr) {
-			throw new Error('Toastr not found');
-		}
-		return $window.toastr;
-	}
 
-	function toastService(toastr) {
+	function toastService() {
 		return {
 			success: function (message) {
 				toastr.success(message, 'Success');
@@ -33,4 +30,4 @@
 		};
 	}
 
-})(window.angular);
+})(window.angular, window.toastr);
