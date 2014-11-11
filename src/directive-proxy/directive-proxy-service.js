@@ -1,10 +1,10 @@
-(function (angular) {
+(function (angular, _) {
 	'use strict';
 
 	angular.module('directive-proxy')
 		.factory('directiveProxyService', directiveProxyService);
 
-	function directiveProxyService($compile, $injector, _) {
+	function directiveProxyService($compile, $injector) {
 
 		proxy.generateDirective = generateDirective;
 		proxy.generateAlias = generateAlias;
@@ -89,4 +89,4 @@
 
 	}
 
-})(window.angular);
+})(window.angular, window._);
