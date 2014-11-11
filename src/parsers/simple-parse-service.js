@@ -28,6 +28,18 @@
 			if (group.end === group.start && group.start !== null) {
 				return null;
 			}
+			/*
+			 * We could possibly speed this up by pre-compiling regular
+			 * expressions for each possible subgroup list, which would allow the
+			 * actual looping logic to be moved into the runtime, but the
+			 * performance of this simple implementation is already so damn fast
+			 * for the current use case (comprehension expression syntax parsers)
+			 * that I can't really be bothered.  Maybe in future if we start
+			 * parsing big expressions frequently via this service...  That
+			 * would presumably involve a "language compiler" which generates
+			 * a set of regular expressions for each subgroup combination once,
+			 * rather than it being done for each invocation of the parser.
+			 */
 			while ((c = getChar()) !== group.end) {
 				/* Test if char marks start of a subgroup */
 				if ((subgroup = isSubgroup(c))) {
