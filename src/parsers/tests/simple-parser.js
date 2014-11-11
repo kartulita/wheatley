@@ -1,7 +1,7 @@
 tests.push({
 	name: 'simple-parser',
 	group: 'Parsers',
-	modules: ['parsers'],
+	modules: ['battlesnake.parsers'],
 	test: function (simpleParseService) {
 
 	describe('Simple parser', function () {

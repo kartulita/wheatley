@@ -1,7 +1,7 @@
 (function (angular, toastr) {
 	'use strict';
 
-	angular.module('utils')
+	angular.module('battlesnake.utils')
 		.factory('toastService', toastService)
 		.run(function () {		
 			if (!toastr) {

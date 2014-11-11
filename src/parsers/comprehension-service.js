@@ -1,7 +1,7 @@
 (function (angular, _) {
 	'use strict';
 
-	angular.module('parsers')
+	angular.module('battlesnake.parsers')
 		.factory('comprehensionLanguage', comprehensionLanguage)
 		.factory('comprehensionService', comprehensionService)
 		;

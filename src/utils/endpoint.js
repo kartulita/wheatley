@@ -9,7 +9,7 @@
 	 *
 	 * Automatically toasts an error if a request fails.
 	 */
-	angular.module('utils')
+	angular.module('battlesnake.utils')
 		.factory('Endpoint', EndpointFactory);
 
 	var urlProtocolRx = /^(?:(\w+?):|(?=.))\/\//;

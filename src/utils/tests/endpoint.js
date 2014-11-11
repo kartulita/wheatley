@@ -1,7 +1,7 @@
 tests.push({
 	name: 'endpoint',
 	group: 'api',
-	modules: ['utils', 'ngMock'],
+	modules: ['battlesnake.utils', 'ngMock'],
 	test: function ($httpBackend, Endpoint) {
 
 	describe('Endpoint', function () {

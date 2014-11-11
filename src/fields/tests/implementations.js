@@ -1,7 +1,7 @@
 tests.push({
 	name: 'autocomplete',
 	group: 'Implementations',
-	modules: ['fields'],
+	modules: ['battlesnake.fields'],
 	test: function ($rootScope, $compile) {
 
 	describe('Autocomplete', function () {

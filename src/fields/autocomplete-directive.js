@@ -1,7 +1,7 @@
 (function (angular, _) {
 	'use strict';
 
-	angular.module('fields')
+	angular.module('battlesnake.fields')
 		.directive('fieldAutocomplete', autocompleteDirective);
 
 	var defaultSuggestionCount = 8;

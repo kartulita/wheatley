@@ -1,7 +1,7 @@
 (function (angular) {
 	'use strict';
 
-	angular.module('fields')
+	angular.module('battlesnake.fields')
 		.directive('fieldMultichoice', multichoiceDirective);
 
 	function multichoiceDirective($parse, directiveProxyService, hintParseService) {

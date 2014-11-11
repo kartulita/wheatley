@@ -1,7 +1,7 @@
 (function (angular, _) {
 	'use strict';
 
-	angular.module('directive-proxy')
+	angular.module('battlesnake.directive-proxy')
 		.factory('directiveProxyService', directiveProxyService);
 
 	function directiveProxyService($compile, $injector) {

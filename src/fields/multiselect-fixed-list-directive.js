@@ -1,7 +1,7 @@
 (function (angular) {
 	'use strict';
 
-	angular.module('fields')
+	angular.module('battlesnake.fields')
 		.directive('fieldMultiselectFixedList', multiselectFixedListDirective);
 
 	var defaultItemsShown = 8;

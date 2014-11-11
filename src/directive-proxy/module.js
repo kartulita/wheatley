@@ -1,6 +1,6 @@
 (function (angular) {
 	'use strict';
 
-	angular.module('directive-proxy', []);
+	angular.module('battlesnake.directive-proxy', []);
 
 })(window.angular);

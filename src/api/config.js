@@ -1,7 +1,7 @@
 (function (angular) {
 	'use strict';
 
-	angular.module('api')
+	angular.module('battlesnake.api')
 		.constant('apiConfigs', {
 			common: {
 				secure: true,

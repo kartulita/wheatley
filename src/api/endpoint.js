@@ -2,7 +2,7 @@
 'use strict';
 
 	/* Defines base endpoint for the API */
-	angular.module('api')
+	angular.module('battlesnake.api')
 		.factory('api', apiEndpoint);
 
 	function apiEndpoint(Endpoint, apiConfig) {

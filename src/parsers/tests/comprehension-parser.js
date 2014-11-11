@@ -1,7 +1,7 @@
 tests.push({
 	name: 'comprehension-parser',
 	group: 'Parsers',
-	modules: ['parsers'],
+	modules: ['battlesnake.parsers'],
 	after: ['simple-parser'],
 	test: function (comprehensionService) {
 

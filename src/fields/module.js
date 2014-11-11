@@ -1,6 +1,6 @@
 (function (angular) {
 	'use strict';
 
-	angular.module('fields', ['directive-proxy', 'parsers', 'ui.bootstrap']);
+	angular.module('battlesnake.fields', ['battlesnake.directive-proxy', 'battlesnake.parsers', 'ui.bootstrap']);
 
 })(window.angular);

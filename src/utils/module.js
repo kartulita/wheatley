@@ -1,6 +1,6 @@
 (function (angular) {
 	'use strict';
 
-	angular.module('utils', [])
+	angular.module('battlesnake.utils', [])
 
 })(window.angular);

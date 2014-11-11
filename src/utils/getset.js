@@ -1,7 +1,7 @@
 (function (angular) {
 	'use strict';
 
-	angular.module('utils')
+	angular.module('battlesnake.utils')
 		.factory('getset', getset);
 
 	function getset($parse) {
