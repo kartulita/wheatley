@@ -4,6 +4,7 @@ tests.push({
 	modules: ['battlesnake.parsers'],
 	after: ['comprehension-parser'],
 	test: function (listComprehensionService) {
+	/** @module parsers */
 
 	describe('List comprehension parser', function () {
 
@@ -131,7 +132,36 @@ tests.push({
 
 		});
 
-		/*it('Log the regular expression to the console for your entertainment', function () {
+		describe('Examples', function () {
+
+			var expr = 'country.code as country.name group by country.continent for country in data.countries';
+			var expected = {
+				select: 'country.code',
+				label: 'country.name',
+				group: 'country.continent',
+				value: 'country',
+				source: 'data.countries'
+			};
+
+			test(expr, expected);
+
+			function test(expr, expected) {
+				var json =
+					'{ ' +
+						_(expected).map(
+							function (value, key) { return key + ': ' + JSON.stringify(value); }
+						).join(', ') +
+					' }';
+				var fn = new Function('listComprehensionService',
+					'return function () { expect(\n  angular.equals(\n    listComprehensionService.' +
+					'test.parse(\'' + expr.replace(/'/g, '\\\'') + '\'),\n    ' +
+					json + '\n  )).to.equal(true);\n};');
+				it(expr, fn(listComprehensionService));
+			}
+
+		});
+
+		it('Log the regular expression to the console for your entertainment', function () {
 			var parser = listComprehensionService.test.compile().parser;
 
 			console.info('Comprehension parser');
@@ -144,7 +174,7 @@ tests.push({
 					return ar;
 				}, ['(n/a)']));
 
-		});*/
+		});
 
 	});
 

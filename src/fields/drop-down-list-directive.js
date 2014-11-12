@@ -1,5 +1,6 @@
 (function (angular) {
 	'use strict';
+	/** @module fields */
 
 	angular.module('battlesnake.fields')
 		.directive('fieldDropDownList', dropDownListDirective);

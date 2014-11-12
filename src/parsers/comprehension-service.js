@@ -1,13 +1,32 @@
 (function (angular, _) {
 	'use strict';
+	/** @module parsers */
 
 	angular.module('battlesnake.parsers')
 		.factory('comprehensionLanguage', comprehensionLanguage)
 		.factory('comprehensionService', comprehensionService)
 		;
 
-	/*
+	/**
 	 * Domain specific language for comprehension expressions
+	 *
+	 * Named capture:
+	 *   {capture-name}
+	 *
+	 * Optional group or choice:
+	 *   [optional subexpression] [choice|other-choice]
+	 *   [[optional|choice]]
+	 *   Note that [option] results in the same behaviour as [option|]
+	 *
+	 * Choice:
+	 *   Entity which if present, separates the current expression into several
+	 *   possibly choices
+	 *
+	 * If you want to build more complex languages and don't want to have to
+	 * sort out cross-references/dependencies/cycles yourself, use the
+	 * {@link languageBuilderService|Language Builder Service} to build a
+	 * language definition from a similar but simpler format which does not
+	 * suffer chicken-and-egg problems.
 	 */
 	function comprehensionLanguage() {
 		/* Captures are specified as {capture-name} */
@@ -21,9 +40,9 @@
 		return sentence;
 	}
 
-	/*
+	/**
 	 * Generates functions that parse comprehensions written in the
-	 * comprehension language.
+	 * {@link comprehensionLanguage|comprehension language}.
 	 *
 	 * The comprehension is parsed, then the resulting parse tree is used to
 	 * build a regular expression and a capture-group index=>name mapping table.
@@ -38,6 +57,14 @@
 
 		return generateComprehensionParser;
 
+		/**
+		 * Generates a comprehension parser from the given comprehension syntax
+		 * @param {string} comprehension - The comprehension syntax
+		 *
+		 * Converts the string to a parse tree using the simple parser, then
+		 * compiles the parse tree to a regular expression which can be used to
+		 * parse expressions that use the given comprehension syntax.
+		 */
 		function generateComprehensionParser(comprehension) {
 			var parseTree = parseComprehensionLanguage(comprehension);
 			var comprehensionParser = generateComprehensionRegex(parseTree);
@@ -48,7 +75,10 @@
 
 			return parseComprehension;
 
-			/* Apply the comprehension regex and pack the results */
+			/**
+			 * Apply the comprehension regex and pack the results
+			 * @param {string} value - The comprehension expression to parse
+			 */
 			function parseComprehension(value) {
 				var matches = value.match(comprehensionParser.regex);
 				if (!matches) {
