@@ -1,9 +1,12 @@
+/**
+ * @ngdoc tests
+ * @name Language builder
+ */
 tests.push({
 	name: 'language-builder-servie',
 	group: 'Parsers',
 	modules: ['battlesnake.parsers'],
 	test: function (languageBuilderService, comprehensionLanguage) {
-	/** @module parsers */
 
 	describe('Language builder', function () {
 		

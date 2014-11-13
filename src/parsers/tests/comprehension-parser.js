@@ -1,3 +1,7 @@
+/**
+ * @ngdoc tests
+ * @name Comprehension parser
+ */
 tests.push({
 	name: 'comprehension-parser',
 	group: 'Parsers',

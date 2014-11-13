@@ -1,6 +1,5 @@
 (function (angular, _) {
 	'use strict';
-	/** @module parsers */
 
 	angular.module('battlesnake.parsers')
 		.factory('comprehensionLanguage', comprehensionLanguage)
@@ -8,7 +7,15 @@
 		;
 
 	/**
+	 * @ngdoc constant
+	 * @name comprehensionLanguage
+	 *
+	 * @Description
+	 *
 	 * Domain specific language for comprehension expressions
+	 *
+	 * Is passed to the {@link simpleParseService|Simple Parser} to parse
+	 * comprehension expression templates.
 	 *
 	 * Named capture:
 	 *   {capture-name}
@@ -41,15 +48,27 @@
 	}
 
 	/**
-	 * Generates functions that parse comprehensions written in the
+	 * @ngdoc service
+	 * @name comprehensionService
+	 * @param {string} comprehension - The comprehension syntax
+	 * @return {function}
+	 *
+	 * @description
+	 *
+	 * A function which generates a comprehension parser for any given
+	 * comprehension template.  The generated comprehension parser parses
+	 * comprehensions which match the template syntax, and returns captured
+	 * expressions as key/value pairs in a returned object.
+	 *
+	 * This service generates a comprehension parser from the given comprehension
+	 * syntax.  The comprehension syntax is specified using the
 	 * {@link comprehensionLanguage|comprehension language}.
 	 *
-	 * The comprehension is parsed, then the resulting parse tree is used to
-	 * build a regular expression and a capture-group index=>name mapping table.
-	 *
-	 * The resulting function takes a comprehension expression as its parameter
-	 * and parses it, returning an object which is a dictionary, mapping
-	 * capture-name to captured-value.
+	 * The function parses the comprehension syntax using the
+	 * {@link simpleParseService|Simple Parser}, then builds a regular
+	 * expression from the parse tree and builds a mapping table which maps from
+	 * the regular expression's numbered capture groups to the named capture
+	 * groups as specified by the comprehension syntax.
 	 */
 	function comprehensionService(simpleParseService, comprehensionLanguage) {
 
@@ -58,12 +77,10 @@
 		return generateComprehensionParser;
 
 		/**
-		 * Generates a comprehension parser from the given comprehension syntax
-		 * @param {string} comprehension - The comprehension syntax
-		 *
-		 * Converts the string to a parse tree using the simple parser, then
-		 * compiles the parse tree to a regular expression which can be used to
-		 * parse expressions that use the given comprehension syntax.
+		 * @name generateComprehensionParser
+		 * @private
+		 * @description
+		 * See {@link comprehensionService|comprehension service}
 		 */
 		function generateComprehensionParser(comprehension) {
 			var parseTree = parseComprehensionLanguage(comprehension);
@@ -76,8 +93,11 @@
 			return parseComprehension;
 
 			/**
-			 * Apply the comprehension regex and pack the results
+			 * @function parseComprehension
 			 * @param {string} value - The comprehension expression to parse
+			 * @private
+			 * @description
+			 * Apply the comprehension regex and pack the results
 			 */
 			function parseComprehension(value) {
 				var matches = value.match(comprehensionParser.regex);

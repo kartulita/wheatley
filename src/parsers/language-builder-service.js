@@ -1,26 +1,34 @@
 (function (angular, _) {
 	'use strict';
-	/** @module parsers */
 
 	angular.module('battlesnake.parsers')
 		.factory('languageBuilderService', languageBuilderService);
 
-	/**
-	 * Service which exposes the {@link simpleParser|Simple Parser}
-	 */
 	function languageBuilderService() {
 		return languageBuilder;
 	}
 
 	/**
-	 * Builds a language definition for the simple parser.  Resolves cross-
-	 * references, and allows phrases (token groups) to be defined externally to
-	 * the token subgroups property, making the language definition syntax
-	 * cleaner and more maintainable than the raw syntax which the simple parser
-	 * accepts.
-	 * @param {object} spec - The language specification
+	 * @ngdoc service
+	 * @name languageBuilderService
+	 * @param {language_spec} spec
+	 *     The language specification (using string references)
+	 * @returns {language}
+	 *     A language spec (using direct references) that can be
+	 *     used with the
+	 *     {@link simpleParser:simple parser}
 	 *
-	 * Example:
+	 * @description
+	 *
+	 * Builds a language definition for the {@link simpleParser|simple parser).
+	 * Resolves cross-references (specified in string format), and allows
+	 * phrases (token groups) to be defined externally to the token subgroups
+	 * property, allowing re-use of phrases in multiple subgroups.  This makes
+	 * the language definition syntax cleaner and more maintainable than the raw
+	 * syntax which the simple parser requires.
+	 *
+	 * @example
+	 *
 	 *   {
 	 *     $root: 'phrase',
 	 *     phrase: ['capture', 'options', 'choice'],

@@ -176,17 +176,7 @@ declare -i SERVERPID=0
 function startServer {
 	section "Server"
 	cd "$OUTDIR"
-	if which mocha-server >/dev/null 2>&1 && false; then
-		# TODO: Mocha server
-		# mocha-server blah blah >/dev/null 2>&1 & SERVERPID=$!
-		true;
-	elif which http-server >/dev/null 2>&1; then
-		# Prefer node sever over python
-		http-server ./ -p $PORT -s -i0 & SERVERPID=$!
-	else
-		# Python server appends / to URLs via 301, wrecking query strings and breaking grep
-		python2 -m SimpleHTTPServer $PORT >/dev/null 2>&1 & SERVERPID=$!
-	fi
+	"$NPM_HTTP" ./ -p $PORT -s -i0 & SERVERPID=$!
 	sleep 0.2
 	if ! kill -s 0 $SERVERPID; then
 		item "Server failed to start"

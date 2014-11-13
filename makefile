@@ -3,27 +3,34 @@ OUTDIR=out
 TMPDIR=tmp
 TAGDIR=html
 DOCDIR=doc
+JSDOCDIR=$(DOCDIR)/jsdoc
 DOCSRCDIR=$(SRCDIR)/$(DOCDIR)
 
 TITLE=Wheatley
+
+PWD=$(shell pwd)
 
 DOCS=$(patsubst $(SRCDIR)/%.md, %.html, $(wildcard $(DOCSRCDIR)/*.md))
 
 MODULES=$(patsubst $(SRCDIR)/%/module.js, $(OUTDIR)/%.js, $(shell find $(SRCDIR)/ -maxdepth 2 -type f -name 'module.js'))
 
+JSDOC=$(JSDOCDIR)/index.html
+
 SOURCES=$(shell find $(SRCDIR)/ -type f -name '*.js' -not -path '*/tests/*' -not -path '*/doc/*')
 
 BUNDLE=$(OUTDIR)/bundle.js
 
-export NODE_DEPS=ng-annotate uglify-js http-server
-export NODE_INSTALL=npm install -g
-
-export NGANNOTATE=ng-annotate --add --single_quotes -
+NODE_MODULES=node_modules
+NPM_NGDOC_DIR=$(NODE_MODULES)/angular-jsdoc
+NODE_BIN=$(NODE_MODULES)/.bin
+NPM_JSDOC=$(NODE_BIN)/jsdoc
+NGANNOTATE=$(NODE_BIN)/ng-annotate --add --single_quotes -
+export NPM_HTTP=$(PWD)/$(NODE_BIN)/http-server
 
 ifdef TEST
-export UGLIFY=uglifyjs -b -
+export UGLIFY=$(NODE_BIN)/uglifyjs -b -
 else
-export UGLIFY=uglifyjs -c -m -
+export UGLIFY=$(NODE_BIN)/uglifyjs -c -m -
 endif
 
 TAGS=sources modules bundle
@@ -36,7 +43,7 @@ RMDIR=rmdir --ignore-fail-on-non-empty --
 SHELL=bash
 .SHELLFLAGS=-euo pipefail -c
 
-.PHONY: all bundle modules docs clean serve deps npm_deps tags syntax test test-loop stats
+.PHONY: all bundle modules docs clean serve deps npm_deps tags syntax test test-loop stats ngdoc jsdoc
 
 all: bundle modules docs tags
 	@true
@@ -47,11 +54,18 @@ bundle: $(BUNDLE)
 modules: $(MODULES)
 	@true
 
-docs: $(DOCDIR)/index.html $(DOCS)
+docs: $(DOCDIR)/index.html $(DOCS) jsdoc
+	@true
+
+
+ngdoc: jsdoc
+	@true
+
+jsdoc: $(JSDOC)
 	@true
 
 deps:
-	$(NODE_INSTALL) $(NODE_DEPS)
+	npm install
 
 syntax:
 	@build/syntax.sh $(SOURCES)
@@ -67,6 +81,9 @@ test-loop:
 
 clean:
 	$(RMRF) $(OUTDIR) $(TMPDIR) $(TAGDIR) $(DOCDIR) || true
+
+distclean: clean
+	$(RMRF) $(NODE_MODULES) || true
 
 serve:
 	http-server ./ -p 8000 -s -i0 >/dev/null 2>&1 &
@@ -86,6 +103,9 @@ $(TMPDIR):
 $(DOCDIR):
 	$(MKDIRP) $(DOCDIR)
 
+$(JSDOCDIR):
+	$(MKDIRP) $(JSDOCDIR)
+
 tags: | $(TAGDIR)
 	build/html-tags.pl >$(TAGDIR)/sources.html $(SOURCES:$(SRCDIR)/%=$(PREFIX)%)
 	build/html-tags.pl >$(TAGDIR)/modules.html $(MODULES:$(OUTDIR)/%=$(PREFIX)%)
@@ -104,11 +124,14 @@ $(OUTDIR)/%.js: $(SRCDIR)/%/*.js | npm_deps $(OUTDIR) $(TMPDIR)
 	$(UGLIFY) < $(TEMP).annot > $(TEMP).ugly
 	cp $(TEMP).ugly $@
 
+$(JSDOCDIR)/index.html: $(SOURCES) | $(JSDOCDIR)
+	$(NPM_JSDOC) -r $(SRCDIR) -d $(JSDOCDIR) -c $(NPM_NGDOC_DIR)/conf.json -t $(NPM_NGDOC_DIR)/template
+
 $(DOCDIR)/index.html: $(DOCS)
 	cat $(sort $^) | build/doc.sh $(TITLE) > $@
 	cp -t $(DOCDIR) build/docpage/*.{css,js}
 
-$(DOCDIR)/%.html: $(DOCSRCDIR)/%.md | $(DOCDIR)
+$(DOCDIR)/%.html: $(DOCSRCDIR)/%.md $(SOURCES) | $(DOCDIR)
 	$(eval NAME=$(patsubst $(DOCSRCDIR)/%.md,%,$<))
 	build/demo.sh $< $(SRCDIR) $(DOCDIR)/demos/$(NAME)
 	pandoc --from=markdown_github --to=html < $< > $@

@@ -1,5 +1,10 @@
 (function (angular, _) {
 	'use strict';
+	/**
+	 * @ngdoc module
+	 * @module parsers
+	 * @requires underscore
+	 */
 
 	angular.module('battlesnake.parsers', []);
 

@@ -1,10 +1,13 @@
+/**
+ * @ngdoc tests
+ * @name List comprehension parser
+ */
 tests.push({
 	name: 'list-comprehension-parser',
 	group: 'Parsers',
 	modules: ['battlesnake.parsers'],
 	after: ['comprehension-parser'],
 	test: function (listComprehensionService) {
-	/** @module parsers */
 
 	describe('List comprehension parser', function () {
 

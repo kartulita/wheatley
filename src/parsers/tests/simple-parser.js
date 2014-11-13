@@ -1,8 +1,12 @@
+/**
+ * @ngdoc tests
+ * @name Simple parser
+ */
 tests.push({
 	name: 'simple-parser',
 	group: 'Parsers',
 	modules: ['battlesnake.parsers'],
-	test: function (simpleParseService) {
+	test: function (simpleParseService, simpleUnparseService) {
 
 	describe('Simple parser', function () {
 		/* Define a language */
@@ -18,7 +22,7 @@ tests.push({
 		it('Parses text block', function () {
 			var expr = 'text block';
 			var tree = simpleParseService(expr, language);
-			expect(simpleParseService.unparse(tree, language)).to.equal(expr);
+			expect(simpleUnparseService(tree, language)).to.equal(expr);
 			expect(tree.length).to.equal(1);
 			expect(tree[0].type).to.equal('text');
 			expect(tree[0].value).to.equal('text block');
@@ -27,7 +31,7 @@ tests.push({
 		it('Parses entity', function () {
 			var expr = '-';
 			var tree = simpleParseService(expr, language);
-			expect(simpleParseService.unparse(tree, language)).to.equal(expr);
+			expect(simpleUnparseService(tree, language)).to.equal(expr);
 			expect(tree.length).to.equal(1);
 			expect(tree[0].type).to.equal('entity');
 		});
@@ -35,7 +39,7 @@ tests.push({
 		it('Parses empty block', function () {
 			var expr = '()';
 			var tree = simpleParseService(expr, language);
-			expect(simpleParseService.unparse(tree, language)).to.equal(expr);
+			expect(simpleUnparseService(tree, language)).to.equal(expr);
 			expect(tree.length).to.equal(1);
 			expect(tree[0].type).to.equal('any');
 			expect(tree[0].value.length).to.equal(0);
@@ -44,7 +48,7 @@ tests.push({
 		it('Parses block containing text', function () {
 			var expr = '(x)';
 			var tree = simpleParseService(expr, language);
-			expect(simpleParseService.unparse(tree, language)).to.equal(expr);
+			expect(simpleUnparseService(tree, language)).to.equal(expr);
 			expect(tree.length).to.equal(1);
 			expect(tree[0].type).to.equal('any');
 			expect(tree[0].value.length).to.equal(1);
@@ -55,7 +59,7 @@ tests.push({
 		it('Parses block containing entity', function () {
 			var expr = '(-)';
 			var tree = simpleParseService(expr, language);
-			expect(simpleParseService.unparse(tree, language)).to.equal(expr);
+			expect(simpleUnparseService(tree, language)).to.equal(expr);
 			expect(tree.length).to.equal(1);
 			expect(tree[0].type).to.equal('any');
 			expect(tree[0].value.length).to.equal(1);
@@ -65,7 +69,7 @@ tests.push({
 		it('Parses nested blocks', function () {
 			var expr = '{[]}';
 			var tree = simpleParseService(expr, language);
-			expect(simpleParseService.unparse(tree, language)).to.equal(expr);
+			expect(simpleUnparseService(tree, language)).to.equal(expr);
 			expect(tree.length).to.equal(1);
 			expect(tree[0].type).to.equal('outer');
 			expect(tree[0].value.length).to.equal(1);
@@ -92,7 +96,7 @@ tests.push({
 			(function () {
 				var expr = '({[]})';
 				var tree = simpleParseService('({[]})', language);
-				expect(simpleParseService.unparse(tree, language)).to.equal(expr);
+				expect(simpleUnparseService(tree, language)).to.equal(expr);
 				expect(tree.length).to.equal(1);
 				expect(tree[0].type).to.equal('any');
 				expect(tree[0].value.length).to.equal(1);
@@ -102,7 +106,7 @@ tests.push({
 			(function () {
 				var expr = '{[-{(x)}]}';
 				var tree = simpleParseService(expr, language);
-				expect(simpleParseService.unparse(tree, language)).to.equal(expr);
+				expect(simpleUnparseService(tree, language)).to.equal(expr);
 				expect(tree.length).to.equal(1);
 				expect(tree[0].type).to.equal('outer');
 				expect(tree[0].value.length).to.equal(1);
@@ -123,7 +127,7 @@ tests.push({
 		it('Parses complex expression', function () {
 			var expr = '(1-2-{3}-[4])-5-[6]-{7-[8-{9}]-(A)}';
 			var tree = simpleParseService(expr, language);
-			expect(simpleParseService.unparse(tree, language)).to.equal(expr);
+			expect(simpleUnparseService(tree, language)).to.equal(expr);
 		});
 
 	});
