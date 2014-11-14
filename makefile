@@ -24,7 +24,7 @@ NODE_MODULES=node_modules
 NPM_NGDOC_DIR=$(NODE_MODULES)/angular-jsdoc
 NODE_BIN=$(NODE_MODULES)/.bin
 NPM_JSDOC=$(NODE_BIN)/jsdoc
-NGANNOTATE=$(NODE_BIN)/ng-annotate --add --single_quotes -
+export NGANNOTATE=$(NODE_BIN)/ng-annotate --add --single_quotes -
 export NPM_HTTP=$(PWD)/$(NODE_BIN)/http-server
 
 ifdef TEST
@@ -86,7 +86,7 @@ distclean: clean
 	$(RMRF) $(NODE_MODULES) || true
 
 serve:
-	http-server ./ -p 8000 -s -i0 >/dev/null 2>&1 &
+	http-server ./ -p 8000 -s -i0 >/dev/null 2>&1
 
 stats:
 	build/stats.sh | less -r
