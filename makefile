@@ -54,7 +54,8 @@ bundle: $(BUNDLE)
 modules: $(MODULES)
 	@true
 
-docs: $(DOCDIR)/index.html $(DOCS) jsdoc
+# $(DOCS) $(DOCDIR)/index.html
+docs: jsdoc
 	@true
 
 

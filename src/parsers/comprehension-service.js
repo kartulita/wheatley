@@ -27,7 +27,7 @@
 	 *
 	 * Choice:
 	 *   Entity which if present, separates the current expression into several
-	 *   possibly choices
+	 *   possible choices
 	 *
 	 * If you want to build more complex languages and don't want to have to
 	 * sort out cross-references/dependencies/cycles yourself, use the

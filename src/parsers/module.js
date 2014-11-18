@@ -2,8 +2,14 @@
 	'use strict';
 	/**
 	 * @ngdoc module
-	 * @module parsers
+	 * @module battlesnake.parsers
 	 * @requires underscore
+	 * @description
+	 * Various parsers, including the {@link simpleParseService|Simple Parser}
+	 * which converts a stream of one-char tokens to a parse tree, and the
+	 * {@link comprehensionService|Comprehension Service} which parses
+	 * expressions written using the comprehension syntax, then compiles them
+	 * to a regular expression (which parses conforming comprehensions).
 	 */
 
 	angular.module('battlesnake.parsers', []);

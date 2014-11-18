@@ -20,7 +20,7 @@
 	 *
 	 * @description
 	 *
-	 * Builds a language definition for the {@link simpleParser|simple parser).
+	 * Builds a language definition for the {@link simpleParseService|simple parser}.
 	 * Resolves cross-references (specified in string format), and allows
 	 * phrases (token groups) to be defined externally to the token subgroups
 	 * property, allowing re-use of phrases in multiple subgroups.  This makes
