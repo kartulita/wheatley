@@ -1,0 +1,12 @@
+[submodule "build/docpage"]
+	path = build/docpage
+	url = git@github.com:battlesnake/docpage.git
+[submodule "src/parsers"]
+	path = src/parsers
+	url = git@github.com:kartulita/parsers.git
+[submodule "src/directive-proxy"]
+	path = src/directive-proxy
+	url = git@github.com:kartulita/directive-proxy.git
+[submodule "src/image-viewer"]
+	path = src/image-viewer
+	url = git@github.com:kartulita/image-viewer.git
