@@ -63,7 +63,7 @@ sub check {
 	$fn =~ /^(\(?)function\ ?\(([^\)]*)\)\ ?{$/ or
 		return 'Function wrapper not found';
 	$bracketed = $1 eq '(';
-	$params = 2;
+	$params = $2;
 	$strict =~ /^\s*(['"])use strict\1;$/ or
 		return 'Strict mode string does not immediately follow function wrapper';
 	$last =~ /^}(\)?)\(([^\)]*)\);$/ or
