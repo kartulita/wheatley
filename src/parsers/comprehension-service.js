@@ -10,7 +10,7 @@
 	 * @ngdoc constant
 	 * @name comprehensionLanguage
 	 *
-	 * @Description
+	 * @description
 	 *
 	 * Domain specific language for comprehension expressions
 	 *
