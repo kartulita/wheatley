@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en" ng-app="demoApp">
+<head>
+<meta charset="utf8">
+<title>Test</title>
+<!-- Underscore -->
+<script src="/bower_components/underscore/underscore-min.js"></script>
+<!-- Angular -->
+<script src="/bower_components/angular/angular.min.js"></script>
+<!-- Angular bootstrap -->
+<link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
+<script src="/bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+<!-- Module -->
+<script src="/out/directive-proxy.js"></script>
+<script src="/out/parsers.js"></script>
+<!--script src="/out/fields.js"></script-->
+<script src="/src/fields/module.js"></script>
+<script src="/src/fields/hint-parse-service.js"></script>
+<script src="/src/fields/field-facade.js"></script>
+<script src="/src/fields/choice-facade.js"></script>
+<script src="/src/fields/drop-down-list-directive.js"></script>
+<script src="/src/fields/fixed-list-directive.js"></script>
+<script src="/src/fields/radio-button-list-directive.js"></script>
+<script src="/src/fields/boolean-facade.js"></script>
+<!-- Local -->
+<script>
+angular.module('demoApp', ['battlesnake.fields']);
+angular.module('demoApp')
+	.controller('demoController', function ($scope) {
+		$scope.model = {
+			number: 42
+		};
+		$scope.data = {
+			numbers: [
+				{ title: 'Most RAM anyone needs', value: 655360 },
+				{ title: 'Forty-two', value: 42 },
+				{ title: 'Forty-nine', value: 49 },
+				{ title: 'Pi', value: 3.141593 },
+				{ title: 'e', value: 2.71 },
+				{ title: 'Phi', value: 1.618 },
+				{ title: 'Unity', value: 1 }
+			]
+		};
+		$scope.data.numbers.forEach(function (number) {
+			number.order = 'Order: ' + Math.pow(10, Math.floor(Math.log10(number.value)));
+		});
+	});
+</script>
+<style>
+	body {
+		padding: 10px 20px 20px;
+	}
+	.radio-group {
+		margin-left: 0.5em;
+		display: block;
+	}
+	.radio-group-label {
+		display: block;
+		font-style: oblique;
+	}
+	.radio-item {
+		margin: 0.5em;
+	}
+	.radio-button-label {
+		margin-left: 0.25em;
+		font-weight: normal;
+	}
+</style>
+</head>
+<body ng-controller="demoController">
+<h1>Experiment</h1>
+<fieldset>
+<legend>hints: not many</legend>
+<field:auto title="Number" x-purpose="choice" ng-model="model.number" x-hints="not many"
+	x-choices="number.value as number.title group by number.order for number in data.numbers"></field:auto>
+</fieldset>
+<fieldset>
+<legend>hints: many</legend>
+<field:auto title="Number" x-purpose="choice" ng-model="model.number" x-hints="many"
+	x-choices="number.value as number.title group by number.order for number in data.numbers"></field:auto>
+</fieldset>
+<fieldset>
+<legend>Model</legend>
+<pre>{{ model | json }}</pre>
+</fieldset>
+<fieldset>
+<legend>Data</legend>
+<pre>{{ data | json }}</pre>
+</fieldset>
+</body>
+</html>

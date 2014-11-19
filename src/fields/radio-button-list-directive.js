@@ -2,28 +2,31 @@
 	'use strict';
 
 	angular.module('battlesnake.fields')
-		.directive('fieldDropDownList', dropDownListDirective);
+		.directive('fieldRadioButtonList', radioButtonListDirective);
 
-	function dropDownListDirective(listComprehensionService) {
+	function radioButtonListDirective(listComprehensionService) {
 		var elements = {
-			select: angular.element(document.createElement('select')),
-			option: angular.element(document.createElement('option')),
-			optgroup: angular.element(document.createElement('optgroup'))
+			dummy: angular.element('<input type="checkbox" style="display:none;"/>'),
+			item: angular.element('<label class="radio-item"/>'),
+			button: angular.element('<input class="radio-button" type="radio"/>'),
+			group: angular.element('<span class="radio-group"/>'),
+			buttonLabel: angular.element('<span class="radio-button-label"/>'),
+			groupLabel: angular.element('<span class="radio-group-label"/>')
 		};
+		var groupIndex = 0;
 		return {
 			restrict: 'E',
 			replace: true,
 			require: 'ngModel',
-			template: '<div class="field-drop-down-list"></div>',
+			template: '<div class="field-radio-button-list"></div>',
 			scope: { },
 			link: function (scope, element, attrs, ngModelController) {
 				/* DOM */
-				var control = elements.select.clone();
-				element.append(control);
+				var thisGroup = 'field-radio-button-list-' + groupIndex++;
+				var buttons = [];
 				/* Memo */
 				scope.model = { item: undefined };
 				ngModelController.$render = modelChanged;
-				control.on('change', viewChanged);
 				/* Choice builder */
 				var choices = listComprehensionService(attrs.choices, scope.$parent);
 				choices.oninvalidate = rebuildList;
@@ -32,7 +35,11 @@
 
 				/* View value changed */
 				function viewChanged() {
-					var index = control.val();
+					var selected = _(buttons)
+						.find(function (el) {
+							return el.checked;
+						});
+					var index = selected ? parseInt(selected.value) : -1;
 					var item = index !== -1 ? choices.items[index] : undefined;
 					scope.$apply(function () {
 						selectedItem(item);
@@ -49,7 +56,17 @@
 				/* Set selected item */
 				function selectItem(item) {
 					scope.model.item = item;
-					control.val(item ? item.index : -1);
+					var selected = _(buttons)
+						.find(function (el) {
+							return parseInt(el.value) === item.index;
+						});
+					if (selected) {
+						selected.checked = true;
+					} else {
+						_(buttons).forEach(function (el) {
+							el.checked = false;
+						});
+					}
 				}
 
 				/* Item has been selected */
@@ -69,8 +86,10 @@
 				function rebuildList(initial) {
 					/* Store previous selection */
 					var memo = scope.model.item ? scope.model.item.memo : undefined;
-					control.empty();
-					appendMany(control, choices.grouped ?
+					element.empty();
+					buttons = [];
+					element.append(elements.dummy.clone());
+					appendMany(element, choices.grouped ?
 						createGroups(_(choices.items).groupBy('group')) :
 						createOptions(choices.items));
 					/* Update selection */
@@ -88,22 +107,32 @@
 
 				/* Create an option group */
 				function createGroup(opts, name) {
-					var optgroup = elements.optgroup.clone()
-						.attr('label', name);
-					appendMany(optgroup, createOptions(opts));
-					return optgroup;
+					var label = elements.groupLabel.clone()
+						.text(name);
+					var group = elements.group.clone()
+						.append(label);
+					appendMany(group, createOptions(opts));
+					return group;
 				}
 
 				/* Create options */
 				function createOptions(opts) {
-					return _(opts).map(createOption);
+					return _(opts).chain().map(createOption).flatten().value();
 				}
 
 				/* Create an option */
 				function createOption(opt) {
-					return elements.option.clone()
-						.attr('value', opt.index)
+					var label = elements.buttonLabel.clone()
 						.text(opt.label);
+					var button = elements.button.clone()
+						.attr('name', thisGroup)
+						.attr('value', opt.index);
+					var item = elements.item.clone()
+						.append(button)
+						.append(label);
+					button.on('change', viewChanged);
+					buttons.push(button[0]);
+					return item;
 				}
 			}
 		};
