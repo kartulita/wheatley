@@ -17,10 +17,12 @@
 <script src="/src/fields/module.js"></script>
 <script src="/src/fields/hint-parse-service.js"></script>
 <script src="/src/fields/field-directive.js"></script>
+<script src="/src/fields/choices-controller.js"></script>
 <script src="/src/fields/choice-directive.js"></script>
 <script src="/src/fields/drop-down-list-directive.js"></script>
 <script src="/src/fields/fixed-list-directive.js"></script>
 <script src="/src/fields/radio-button-list-directive.js"></script>
+<script src="/src/fields/autocomplete-directive.js"></script>
 <script src="/src/fields/boolean-directive.js"></script>
 <!-- Local -->
 <script>
@@ -28,7 +30,7 @@ angular.module('demoApp', ['battlesnake.fields']);
 angular.module('demoApp')
 	.controller('demoController', function ($scope) {
 		$scope.model = {
-			number: 42
+			number: 1
 		};
 		$scope.data = {
 			numbers: [
