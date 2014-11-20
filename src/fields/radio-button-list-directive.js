@@ -4,7 +4,7 @@
 	angular.module('battlesnake.fields')
 		.directive('fieldRadioButtonList', radioButtonListDirective);
 
-	function radioButtonListDirective(listComprehensionService) {
+	function radioButtonListDirective() {
 		var elements = {
 			dummy: angular.element('<input type="checkbox" style="display:none;"/>'),
 			item: angular.element('<label class="radio-item"/>'),
@@ -17,62 +17,44 @@
 		return {
 			restrict: 'E',
 			replace: true,
-			require: 'ngModel',
+			require: 'choices',
 			template: '<div class="field-radio-button-list"></div>',
-			scope: { },
-			link: function (scope, element, attrs, ngModelController) {
+			link: function (scope, element, attrs, choicesController) {
 				/* DOM */
 				var thisGroup = 'field-radio-button-list-' + groupIndex++;
 				var buttons = [];
-				/* Memo */
-				scope.model = { item: undefined };
-				ngModelController.$render = modelChanged;
-				/* Choice builder */
-				var choices = listComprehensionService(attrs.choices, scope.$parent);
-				choices.oninvalidate = rebuildList;
-				/* Bootstrap */
-				rebuildList(true);
+				/* Choice controller */
+				choicesController.rebuildView = rebuildList;
+				choicesController.updateView = setSelection;
 
-				/* View value changed */
-				function viewChanged() {
+				return;
+
+				/* Radio button selected */
+				function radioButtonSelected() {
 					var selected = _(buttons)
 						.find(function (el) {
 							return el.checked;
 						});
 					var index = selected ? parseInt(selected.value) : -1;
-					var item = index !== -1 ? choices.items[index] : undefined;
 					scope.$apply(function () {
-						selectedItem(item);
+						choicesController.viewChanged(index);
 					});
 				}
 
-				/* Model value changed */
-				function modelChanged() {
-					var select = ngModelController.$viewValue;
-					var item = _(choices.items).findWhere({ select: select });
-					selectItem(item);
-				}
-
 				/* Set selected item */
-				function selectItem(item) {
-					scope.model.item = item;
-					var selected = _(buttons)
-						.find(function (el) {
-							return parseInt(el.value) === item.index;
-						});
-					if (selected) {
-						selected.checked = true;
+				function setSelection() {
+					var button = choicesController.selected &&
+						_(buttons)
+							.find(function (el) {
+								return parseInt(el.value) === choicesController.selected.index;
+							});
+					if (button) {
+						button.checked = true;
 					} else {
-						_(buttons).forEach(function (el) {
-							el.checked = false;
+						_(buttons).forEach(function (button) {
+							button.checked = false;
 						});
 					}
-				}
-
-				/* Item has been selected */
-				function selectedItem(item) {
-					scope.model.item = item;
-					ngModelController.$setViewValue(item ? item.select : undefined);
 				}
 
 				/* ng jqLite does not support appending multiple elements */
@@ -83,21 +65,14 @@
 				}
 
 				/* Rebuild list contents */
-				function rebuildList(initial) {
-					/* Store previous selection */
-					var memo = scope.model.item ? scope.model.item.memo : undefined;
+				function rebuildList() {
+					var choices = choicesController.choices;
 					element.empty();
 					buttons = [];
 					element.append(elements.dummy.clone());
 					appendMany(element, choices.grouped ?
 						createGroups(_(choices.items).groupBy('group')) :
 						createOptions(choices.items));
-					/* Update selection */
-					if (!initial) {
-						var item = _(choices.items).findWhere({ memo: memo });
-						selectItem(item);
-						selectedItem(item);
-					}
 				}
 
 				/* Create option groups */
@@ -130,7 +105,7 @@
 					var item = elements.item.clone()
 						.append(button)
 						.append(label);
-					button.on('change', viewChanged);
+					button.on('change', radioButtonSelected);
 					buttons.push(button[0]);
 					return item;
 				}

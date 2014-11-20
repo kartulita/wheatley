@@ -13,49 +13,29 @@
 		return {
 			restrict: 'E',
 			replace: true,
-			require: 'ngModel',
+			require: 'choices',
 			template: '<div class="field-drop-down-list"></div>',
-			scope: { },
-			link: function (scope, element, attrs, ngModelController) {
+			link: function (scope, element, attrs, choicesController) {
 				/* DOM */
 				var control = elements.select.clone();
 				element.append(control);
-				/* Memo */
-				scope.model = { item: undefined };
-				ngModelController.$render = modelChanged;
-				control.on('change', viewChanged);
-				/* Choice builder */
-				var choices = listComprehensionService(attrs.choices, scope.$parent);
-				choices.oninvalidate = rebuildList;
-				/* Bootstrap */
-				rebuildList(true);
+				/* Choices controller */
+				choicesController.rebuildView = rebuildList;
+				choicesController.updateView = setSelected;
+				control.on('change', listItemSelected);
 
 				/* View value changed */
-				function viewChanged() {
+				function listItemSelected() {
 					var index = control.val();
-					var item = index !== -1 ? choices.items[index] : undefined;
 					scope.$apply(function () {
-						selectedItem(item);
+						choicesController.viewChanged(index);
 					});
 				}
 
-				/* Model value changed */
-				function modelChanged() {
-					var select = ngModelController.$viewValue;
-					var item = _(choices.items).findWhere({ select: select });
-					selectItem(item);
-				}
-
 				/* Set selected item */
-				function selectItem(item) {
-					scope.model.item = item;
-					control.val(item ? item.index : -1);
-				}
-
-				/* Item has been selected */
-				function selectedItem(item) {
-					scope.model.item = item;
-					ngModelController.$setViewValue(item ? item.select : undefined);
+				function setSelected() {
+					control.val(choicesController.selected &&
+						choicesController.selected.index);
 				}
 
 				/* ng jqLite does not support appending multiple elements */
@@ -66,19 +46,12 @@
 				}
 
 				/* Rebuild list contents */
-				function rebuildList(initial) {
-					/* Store previous selection */
-					var memo = scope.model.item ? scope.model.item.memo : undefined;
+				function rebuildList() {
+					var choices = choicesController.choices;
 					control.empty();
 					appendMany(control, choices.grouped ?
 						createGroups(_(choices.items).groupBy('group')) :
 						createOptions(choices.items));
-					/* Update selection */
-					if (!initial) {
-						var item = _(choices.items).findWhere({ memo: memo });
-						selectItem(item);
-						selectedItem(item);
-					}
 				}
 
 				/* Create option groups */

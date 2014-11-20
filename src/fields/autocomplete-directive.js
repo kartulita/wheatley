@@ -10,20 +10,18 @@
 		return {
 			restrict: 'E',
 			replace: true,
-			require: 'ngModel',
+			require: 'choices',
 			template:
 				'<div class="field-autocomplete">' +
 				'<input class="autocomplete-text-box" type="text"' +
-				' typeahead="choice as choice.title for choice in choices' +
-				' | filter: { title: $viewValue } | limitTo: suggestions"' +
+				' typeahead="choice as choice.label for choice in choices' +
+				' | filter: { label: $viewValue } | limitTo: suggestions"' +
 				' ng-model="model.value"' +
 				' typeahead-on-select="onSelect($item, $model, $label)"' +
 				' typeahead-editable="editable">' +
 				'</div>',
-			scope: {
-				choices: '='
-			},
-			link: function (scope, element, attrs, ngModelController) {
+			scope: { },
+			link: function (scope, element, attrs, choicesController) {
 				var hints = hintParseService.parse(attrs.hints,
 					{
 						custom: false,
@@ -31,25 +29,30 @@
 						show: defaultSuggestionCount
 					});
 				/* Value binding */
-				scope.model = { value: null };
-				ngModelController.$render = setViewValue;
-				scope.onSelect = getViewValue;
-				setViewValue();
+				scope.model = { value: undefined, choices: [] };
+				scope.onSelect = onSelect;
+				/* Choice controller */
+				choicesController.rebuildView = setOptions;
+				choicesController.updateView = setValue;
 				/* Number of suggestions to show */
 				scope.suggestions = parseInt(hints.show);
 				/* Custom values? */
 				scope.editable = hints.custom;
 
-				function setViewValue() {
-					scope.model.value = _(scope.choices)
-						.findWhere({ value: ngModelController.$viewValue });
+				return;
+
+				function setOptions() {
+					scope.choices = choicesController.choices.items;
 				}
 
-				function getViewValue(item) {
+				function setValue() {
+					scope.model.value = choicesController.selected;
+				}
+
+				function onSelect(item) {
 					if (item) {
-						ngModelController.$setViewValue(item.value);
+						choicesController.viewChanged(item.index);
 					}
-					ngModelController.$setValidity('validSelection', !!item || hints.optional);
 				}
 			}
 		};
