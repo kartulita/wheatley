@@ -34,6 +34,8 @@ tests.push({
 		/*
 		 * Need some way to simulate input, which will trigger the autocomplete's
 		 * event listeners
+		 */
+		/*---Commented out block---
 		describe('Data binding', function () {
 
 			function sendkeys(e, str) {

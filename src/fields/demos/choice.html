@@ -16,12 +16,12 @@
 <!--script src="/out/fields.js"></script-->
 <script src="/src/fields/module.js"></script>
 <script src="/src/fields/hint-parse-service.js"></script>
-<script src="/src/fields/field-facade.js"></script>
-<script src="/src/fields/choice-facade.js"></script>
+<script src="/src/fields/field-directive.js"></script>
+<script src="/src/fields/choice-directive.js"></script>
 <script src="/src/fields/drop-down-list-directive.js"></script>
 <script src="/src/fields/fixed-list-directive.js"></script>
 <script src="/src/fields/radio-button-list-directive.js"></script>
-<script src="/src/fields/boolean-facade.js"></script>
+<script src="/src/fields/boolean-directive.js"></script>
 <!-- Local -->
 <script>
 angular.module('demoApp', ['battlesnake.fields']);
@@ -32,13 +32,15 @@ angular.module('demoApp')
 		};
 		$scope.data = {
 			numbers: [
-				{ title: 'Most RAM anyone needs', value: 655360 },
+				{ title: 'Zero', value: 0 },
+				{ title: 'Unity', value: 1 },
+				{ title: 'Phi', value: 1.618 },
+				{ title: 'e', value: 2.71 },
+				{ title: 'Pi', value: 3.141593 },
+				{ title: 'Speed of unladen European swallow (m/s)', value: 11 },
 				{ title: 'Forty-two', value: 42 },
 				{ title: 'Forty-nine', value: 49 },
-				{ title: 'Pi', value: 3.141593 },
-				{ title: 'e', value: 2.71 },
-				{ title: 'Phi', value: 1.618 },
-				{ title: 'Unity', value: 1 }
+				{ title: 'Most RAM anyone needs (kB)', value: 640 }
 			]
 		};
 		$scope.data.numbers.forEach(function (number) {
@@ -50,12 +52,27 @@ angular.module('demoApp')
 	body {
 		padding: 10px 20px 20px;
 	}
+	.field {
+		border: 1px solid #ccc;
+		border-radius: 10px;
+		margin: 10px;
+		position: relative;
+		padding: 15px 10px 10px 10px;
+	}
+	.field-label {
+		position: absolute;
+		top: -10px;
+		left: 12px;
+		background: white;
+		padding: 0 2px;
+	}
 	.radio-group {
 		margin-left: 0.5em;
 		display: block;
 	}
 	.radio-group-label {
 		display: block;
+		font-weight: normal;
 		font-style: oblique;
 	}
 	.radio-item {
@@ -68,15 +85,20 @@ angular.module('demoApp')
 </style>
 </head>
 <body ng-controller="demoController">
-<h1>Experiment</h1>
+<h1>Choice directive</h1>
 <fieldset>
 <legend>hints: not many</legend>
-<field:auto title="Number" x-purpose="choice" ng-model="model.number" x-hints="not many"
+<field:auto title="Pick a number" x-purpose="choice" ng-model="model.number" x-hints="not many"
 	x-choices="number.value as number.title group by number.order for number in data.numbers"></field:auto>
 </fieldset>
 <fieldset>
 <legend>hints: many</legend>
-<field:auto title="Number" x-purpose="choice" ng-model="model.number" x-hints="many"
+<field:auto title="Pick a number" x-purpose="choice" ng-model="model.number" x-hints="many"
+	x-choices="number.value as number.title group by number.order for number in data.numbers"></field:auto>
+</fieldset>
+<fieldset>
+<legend>hints: custom</legend>
+<field:auto title="Pick a number" x-purpose="choice" ng-model="model.number" x-hints="custom"
 	x-choices="number.value as number.title group by number.order for number in data.numbers"></field:auto>
 </fieldset>
 <fieldset>
