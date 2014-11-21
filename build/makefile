@@ -15,11 +15,14 @@ PWD=$(shell pwd)
 
 DOCS=$(patsubst $(SRCDIR)/%.md, %.html, $(wildcard $(DOCSRCDIR)/*.md))
 
-MODULES=$(patsubst $(SRCDIR)/%/module.js, $(JSDIR)/%.js, $(shell find $(SRCDIR)/ -maxdepth 2 -type f -name 'module.js'))
+MODULEHEADERS=$(shell find $(SRCDIR)/ -maxdepth 2 -type f -name 'module.js')
+
+MODULES=$(patsubst $(SRCDIR)/%/module.js, $(JSDIR)/%.js, $(MODULEHEADERS))
 
 JSDOC=$(JSDOCDIR)/index.html
 
-SOURCES=$(shell find $(SRCDIR)/ -type f -name '*.js' -not -path '*/tests/*' -not -path '*/doc/*')
+SOURCES=$(shell find $(SRCDIR)/ -type f -name '*.js' -not -path '*/tests/*' -not -path '*/doc/*' -not -path '*/demos/*')
+SOURCES=$(wildcard $(patsubst %/module.js, %/*.js, $(MODULEHEADERS)))
 
 BUNDLE=$(JSDIR)/bundle.js
 
@@ -148,3 +151,11 @@ $(DOCDIR)/%.html: $(DOCSRCDIR)/%.md $(SOURCES) | $(DOCDIR)
 	$(eval NAME=$(patsubst $(DOCSRCDIR)/%.md,%,$<))
 	build/demo.sh $< $(SRCDIR) $(DOCDIR)/demos/$(NAME)
 	pandoc --from=markdown_github --to=html < $< > $@
+
+diag:
+	@echo "Modules: "
+	@printf -- " * %s\n" $(MODULES)
+	@echo
+	@echo "Sources: "
+	@printf -- " * %s\n" $(SOURCES)
+	@echo
