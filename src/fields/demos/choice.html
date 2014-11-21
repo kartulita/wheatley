@@ -28,7 +28,7 @@
 <script>
 angular.module('demoApp', ['battlesnake.fields']);
 angular.module('demoApp')
-	.controller('demoController', function ($scope) {
+	.controller('demoController', function ($scope, $timeout) {
 		$scope.model = {
 			number: 1
 		};
@@ -84,6 +84,9 @@ angular.module('demoApp')
 		margin-left: 0.25em;
 		font-weight: normal;
 	}
+	.invalid {
+		background: rgba(255, 0, 0, 0.3);
+	}
 </style>
 </head>
 <body ng-controller="demoController">
@@ -99,8 +102,8 @@ angular.module('demoApp')
 	x-choices="number.value as number.title group by number.order for number in data.numbers"></field:auto>
 </fieldset>
 <fieldset>
-<legend>hints: custom</legend>
-<field:auto title="Pick a number" x-purpose="choice" ng-model="model.number" x-hints="custom"
+<legend>hints: search</legend>
+<field:auto title="Pick a number" x-purpose="choice" ng-model="model.number" x-hints="search"
 	x-choices="number.value as number.title group by number.order for number in data.numbers"></field:auto>
 </fieldset>
 <fieldset>

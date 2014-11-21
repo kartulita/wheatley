@@ -14,10 +14,12 @@
 					{
 						many: choices.items.length > 8,
 						custom: false,
+						search: false,
 						multi: false
 					});
 				choices = undefined;
-				var implementation = hints.custom ? 'autocomplete' :
+				var implementation = hints.search ? 'autocomplete' :
+					hints.custom ? 'autocomplete' :
 					hints.many ? 'drop-down-list' : 'radio-button-list';
 				directiveProxyService('field:' + implementation, { hints: 'copy' }, scope, element, attrs);
 			});

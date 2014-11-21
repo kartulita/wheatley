@@ -27,7 +27,6 @@
 						multi: false,
 						optional: false,
 					});
-				console.log(attrs.hints, hints);
 				/* Value binding */
 				scope.model = { value: null };
 				ngModelController.$render = setViewValue;
