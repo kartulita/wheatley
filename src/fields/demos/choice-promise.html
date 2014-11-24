@@ -74,26 +74,30 @@
 <script>
 angular.module('demoApp', ['battlesnake.fields']);
 angular.module('demoApp')
-	.controller('demoController', function ($scope, $timeout) {
+	.controller('demoController', function ($scope, $http) {
+
 		$scope.model = {
-			number: 1
+			country: 'ee'
 		};
-		$scope.data = {
-			numbers: [
-				{ title: 'Zero', value: 0 },
-				{ title: 'Unity', value: 1 },
-				{ title: 'Phi', value: 1.618 },
-				{ title: 'e', value: 2.71 },
-				{ title: 'Pi', value: 3.141593 },
-				{ title: 'Speed of unladen European swallow (m/s)', value: 11 },
-				{ title: 'Forty-two', value: 42 },
-				{ title: 'Forty-nine', value: 49 },
-				{ title: 'Most RAM anyone needs (kB)', value: 640 }
-			]
+
+		$scope.getCountries = function (filter) {
+			return $http.get('countries.json').then(function (res) { return res.data; })
+				.then(fakeServerSideFiltering);
+				
+			/* 
+			 * Since the server doesn't do the filtering, we'll do it
+			 * here and pretend that the server did it.
+			 */
+			function fakeServerSideFiltering(data) {
+				return _(data)
+					.filter(function (country) {
+						return !filter ||
+							country.name.indexOf(filter) !== -1 ||
+							country.tld.toUpperCase() === filter.toUpperCase();
+					});
+			}
 		};
-		$scope.data.numbers.forEach(function (number) {
-			number.order = 'Order: ' + Math.pow(10, Math.floor(Math.log10(number.value)));
-		});
+
 	});
 </script>
 
@@ -101,26 +105,20 @@ angular.module('demoApp')
 
 <body ng-controller="demoController">
 
-<h1>Choice directive</h1>
-<h2>Data stored on client-side</h2>
+<h1>Choice directive, bound to promise factory</h1>
+<h2>List options loaded via HTTP, server-side searching possible for autocomplete field</h2>
 <hr>
 
 <fieldset>
-<legend>hints: not many</legend>
-<field:auto title="Pick a number" x-purpose="choice" ng-model="model.number" x-hints="not many"
-	x-choices="number.value as number.title group by number.order for number in data.numbers"></field:auto>
-</fieldset>
-
-<fieldset>
 <legend>hints: many</legend>
-<field:auto title="Pick a number" x-purpose="choice" ng-model="model.number" x-hints="many"
-	x-choices="number.value as number.title group by number.order for number in data.numbers"></field:auto>
+<field:auto title="Pick a country" x-purpose="choice" ng-model="model.country" x-hints="many"
+	x-choices="country.tld as country.name for country in getCountries($viewValue)"></field:auto>
 </fieldset>
 
 <fieldset>
 <legend>hints: search</legend>
-<field:auto title="Pick a number" x-purpose="choice" ng-model="model.number" x-hints="search"
-	x-choices="number.value as number.title group by number.order for number in data.numbers"></field:auto>
+<field:auto title="Pick a country" x-purpose="choice" ng-model="model.country" x-hints="search"
+	x-choices="country.tld as country.name for country in getCountries($viewValue)"></field:auto>
 </fieldset>
 
 <fieldset>

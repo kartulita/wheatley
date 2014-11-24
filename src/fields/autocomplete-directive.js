@@ -40,6 +40,7 @@
 					custom: false,
 					optional: false,
 					regexp: false,
+					filtered: false,
 					show: defaultSuggestionCount
 				});
 			/* Value binding */
@@ -53,24 +54,40 @@
 			/* Custom values? */
 			scope.editable = hints.custom;
 
+			/* DOM */
+			var control = element.find('input');
+
 			return;
 
 			function queryChoices(search) {
-				var escaped = hints.regexp ? search : !search.length ? '' :
-					'(^|\\W)' + search.replace(/[\.\+\*\?\(\)\[\]\|\\\"\^\$]/g, '\\\&');
-				var searchRx = new RegExp(escaped, 'i');
+				var searchRx, searchFn;
+				if (hints.filtered || search.length === 0) {
+					searchFn = function () { return true; };
+				} else {
+					if (hints.regexp) {
+						searchRx = new RegExp(search, 'i');
+					} else {
+						searchRx = new RegExp('(^|\\W)' + search.replace(/[\.\+\*\?\(\)\[\]\|\\\"\^\$]/g, '\\\&'), 'i');
+					}
+					searchFn = function (str) { return searchRx.test(str); };
+				}
 				return choicesController.requery()
 					.then(function (items) {
 						var remaining = parseInt(hints.show) || Infinity;
-						return _(items).filter(function (item) {
-							return remaining > 0 && searchRx.test(item.label) &&
-								!!(remaining--);
-						});
+						return _(items)
+							.filter(function (item) {
+								return remaining > 0 && searchFn(item.label) && !!(remaining--);
+							});
 					});
 			}
 
 			function selectionChanged(item) {
-				scope.model.value = item;
+				/*
+				 * Don't update the model if this is in response to items refresh
+				 */
+				if (document.activeElement !== control[0]) {
+					scope.model.value = item;
+				}
 			}
 
 			function onSelect(item) {

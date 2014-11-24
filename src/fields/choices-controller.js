@@ -5,7 +5,7 @@
 		.controller('choicesController', choicesController)
 		.directive('choices', choicesDirective);
 
-	function choicesDirective() {
+	function choicesDirective($timeout) {
 		return {
 			restrict: 'A',
 			require: ['choices', 'ngModel'],
@@ -43,13 +43,23 @@
 
 		function postlink(scope, element, attrs, ctrl) {
 			var choicesController = ctrl[0];
+			var ngModelController = ctrl[1];
 
 			attrs.$observe('choices', choicesChanged);
+
+			$timeout(initializeSelection, 0);
+
+			return;
+
+			/* Initialize selection (before choices have loaded) */
+			function initializeSelection() {
+				choicesController.initSelection(ngModelController.$viewValue);
+			}
 			
+			/* Choices expression changed */
 			function choicesChanged(expr) {
 				choicesController.bindComprehension(expr);
 			}
-			return;
 		}
 	}
 
@@ -70,12 +80,24 @@
 
 		this.requery = requeryChoices;
 		this.refresh = refreshChoices;
+		this.isDynamic = getIsDynamic;
 
+		/*
+		 * Used internally to set the selection before the choices have been
+		 * loaded from the underlying data source
+		 */
+		this.initSelection = initSelection;
+
+		var preselect = undefined;
 		var selected = undefined;
 		var choices = undefined;
 		var items = [];
 
 		return this;
+
+		function initSelection(select) {
+			preselect = select;
+		}
 
 		function setSelected(item) {
 			if (item === selected) {
@@ -96,17 +118,23 @@
 			return choices.refresh();
 		}
 
+		function getIsDynamic() {
+			return choices.isDynamic;
+		}
+
 		function bindComprehension(comprehension) {
 			choices = listComprehensionService(comprehension, $scope.$parent, choicesChanged);
 			return choices.refresh();
 		}
 
-		function choicesChanged(newItems) {
+		function choicesChanged(newItems, grouped) {
 			items = newItems;
 			if (self.onChoicesChanged) {
-				self.onChoicesChanged(items);
+				self.onChoicesChanged(items, grouped);
 			}
-			setSelected(selected && _(items).findWhere({ memo: selected.memo }));
+			var memo = preselect !== undefined ? preselect : selected && selected.memo;
+			preselect = undefined;
+			setSelected(memo && _(items).findWhere({ memo: memo }));
 		}
 
 		function modelChanged(select) {
