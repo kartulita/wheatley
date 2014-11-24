@@ -10,3 +10,6 @@
 [submodule "src/image-viewer"]
 	path = src/image-viewer
 	url = git@github.com:kartulita/image-viewer.git
+[submodule "src/fields"]
+	path = src/fields
+	url = git@github.com:kartulita/fields.git
