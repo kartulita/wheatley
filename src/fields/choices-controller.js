@@ -11,6 +11,7 @@
 			require: ['choices', 'ngModel'],
 			controller: 'choicesController',
 			priority: 1,
+			scope: true,
 			link: {
 				pre: prelink,
 				post: postlink
@@ -21,50 +22,39 @@
 			var choicesController = ctrl[0];
 			var ngModelController = ctrl[1];
 
-			/* ngModel <=> choices binding */
-			ngModelController.$render = modelChangedProxy;
-			choicesController.selectionChanged = selectionChanged;
+			/* ngModel => choices lookup */
+			ngModelController.$render = modelChangedChoices;
+
+			/* Selected item */
+			scope.selectionChanged = selectionChanged;
 
 			return;
 
 			/* Update view */
-			function modelChangedProxy() {
+			function modelChangedChoices() {
 				choicesController.modelChanged(ngModelController.$viewValue);
 			}
 
 			/* Seleted value changed (update model) */
-			function selectionChanged() {
-				var selected = choicesController.selected;
-				ngModelController.$setViewValue(selected ? selected.select : undefined);
+			function selectionChanged(item) {
+				ngModelController.$setViewValue(item && item.select);
 			}
 		}
 
 		function postlink(scope, element, attrs, ctrl) {
 			var choicesController = ctrl[0];
-			var ngModelController = ctrl[1];
 
-			attrs.$observe('choices', choicesController.bindComprehension);
+			attrs.$observe('choices', choicesChanged);
+			
+			function choicesChanged(expr) {
+				choicesController.bindComprehension(expr);
+			}
 			return;
 		}
 	}
 
 	function choicesController($scope, listComprehensionService) {
 		var self = this;
-
-		/* Produced by listComprehensionService */
-		this.choices = undefined;
-
-		/* Selected item (choices.items[selectedIndex]) */
-		this.selected = undefined;
-
-		/* Choices changed, rebuild view */
-		this.rebuildView = function () {};
-
-		/* Selection changed, update view */
-		this.updateView = function () {};
-
-		/* Called to change the selected item, bound in choices directive */
-		this.selectionChanged = undefined;
 
 		/* Call this from field directive to update model value */
 		this.viewChanged = viewChanged;
@@ -75,48 +65,59 @@
 		/* Process the comprehension and bind the result */
 		this.bindComprehension = bindComprehension;
 
-		var bound = false;
+		this.onSelectionChanged = undefined;
+		this.onChoicesChanged = undefined;
+
+		this.requery = requeryChoices;
+		this.refresh = refreshChoices;
+
+		var selected = undefined;
+		var choices = undefined;
+		var items = [];
 
 		return this;
 
-		/* Called when the comprehension expression changes */
-		function bindComprehension(comprehension) {
-			if (self.choices) {
-				self.choices.oninvalidate = undefined;
+		function setSelected(item) {
+			if (item === selected) {
+				return;
 			}
-			self.choices = listComprehensionService(comprehension, $scope);
-			self.choices.oninvalidate = choicesInvalidated;
-			choicesInvalidated();
+			selected = item;
+			$scope.selectionChanged(selected);
+			if (self.onSelectionChanged) {
+				self.onSelectionChanged(selected);
+			}
 		}
 
-		/* Called when model value changes */
+		function requeryChoices() {
+			return choices.requery();
+		}
+
+		function refreshChoices() {
+			return choices.refresh();
+		}
+
+		function bindComprehension(comprehension) {
+			choices = listComprehensionService(comprehension, $scope.$parent, choicesChanged);
+			return choices.refresh();
+		}
+
+		function choicesChanged(newItems) {
+			items = newItems;
+			if (self.onChoicesChanged) {
+				self.onChoicesChanged(items);
+			}
+			setSelected(selected && _(items).findWhere({ memo: selected.memo }));
+		}
+
 		function modelChanged(select) {
-			self.selected = _(self.choices.items).findWhere({ select: select });
-			self.updateView();
+			setSelected(_(items).findWhere({ select: select }));
 		}
 
-		/* Called when selection changed (params: selected index) */
 		function viewChanged(index) {
 			if (index === undefined || index === null || index === -1) {
-				self.selected = undefined;
-			} else if (index < 0 || index >= self.choices.items.length) {
-				throw new Error('Index out of bounds (' + index + ')');
+				setSelected(undefined);
 			} else {
-				self.selected = self.choices.items[index];
-			}
-			self.selectionChanged();
-		}
-
-		/* Choices list refreshed, re-build view */
-		function choicesInvalidated() {
-			var memo = self.selected ? self.selected.memo : undefined;
-			self.rebuildView();
-			self.selected = _(self.choices.items).findWhere({ memo: memo });
-			if (bound) {
-				self.selectionChanged();
-				self.updateView();
-			} else {
-				bound = true;
+				setSelected(_(items).findWhere({ index: index }));
 			}
 		}
 	}

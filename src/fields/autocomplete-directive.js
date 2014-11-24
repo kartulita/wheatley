@@ -6,18 +6,16 @@
 
 	var defaultSuggestionCount = 8;
 
-	function autocompleteDirective(hintParseService, $q) {
+	function autocompleteDirective(hintParseService) {
 		var elements = {
 			autocomplete: angular.element('<input/>')
 				.attr({
 					class: 'autocomplete-text-box',
 					type: 'text',
 					'ng-model': 'model.value',
-					typeahead:
-						'choice as choice.label for choice in getChoices($viewValue) |' +
-						'filter: { label: $viewValue } |' +
-						'limitTo: suggestions',
+					typeahead: 'choice as choice.label for choice in queryChoices($viewValue)',
 					'typeahead-on-select': 'onSelect($item, $model, $label)',
+					'typeahead-loading': 'model.loading',
 					'typeahead-editable': 'editable'
 				})
 		};
@@ -47,39 +45,32 @@
 			/* Value binding */
 			scope.model = {
 				value: undefined,
-				choices: [],
-				getChoices: getChoices
 			};
+			scope.queryChoices = queryChoices;
 			scope.onSelect = onSelect;
 			/* Choice controller */
-			choicesController.rebuildView = setOptions;
-			choicesController.updateView = setValue;
-			/* Number of suggestions to show */
-			scope.suggestions = parseInt(hints.show);
+			choicesController.onSelectionChanged = selectionChanged;
 			/* Custom values? */
 			scope.editable = hints.custom;
 
 			return;
 
-			function getChoices(search) {
-				var escaped = hints.regexp ? search : '(^|\W)' +
-					search.replace(/[\.\+\*\?\(\)\[\]\|\\\"\^\$]/g, '\\\&');
-				searchRx = new RegExp(escaped, 'i');
-				// TODO: Use promises throughout comprehension evaluation chain */
-				return $q.when(choicesController.choices.getItems)
+			function queryChoices(search) {
+				var escaped = hints.regexp ? search : !search.length ? '' :
+					'(^|\\W)' + search.replace(/[\.\+\*\?\(\)\[\]\|\\\"\^\$]/g, '\\\&');
+				var searchRx = new RegExp(escaped, 'i');
+				return choicesController.requery()
 					.then(function (items) {
+						var remaining = parseInt(hints.show) || Infinity;
 						return _(items).filter(function (item) {
-							return searchRx.test(item.label);
+							return remaining > 0 && searchRx.test(item.label) &&
+								!!(remaining--);
 						});
 					});
 			}
 
-			function setOptions() {
-				scope.choices = choicesController.choices.items;
-			}
-
-			function setValue() {
-				scope.model.value = choicesController.selected;
+			function selectionChanged(item) {
+				scope.model.value = item;
 			}
 
 			function onSelect(item) {

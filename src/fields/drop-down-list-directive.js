@@ -4,7 +4,7 @@
 	angular.module('battlesnake.fields')
 		.directive('fieldDropDownList', dropDownListDirective);
 
-	function dropDownListDirective(listComprehensionService) {
+	function dropDownListDirective() {
 		var elements = {
 			select: angular.element(document.createElement('select')),
 			option: angular.element(document.createElement('option')),
@@ -25,24 +25,25 @@
 		}
 
 		function link(scope, element, attrs, choicesController) {
+			/* Choice controller */
+			choicesController.onSelectionChanged = selectionChanged;
+			choicesController.onChoicesChanged = choicesChanged;
+
+			/* DOM */
 			var control = element.find('select');
-			/* Choices controller */
-			choicesController.rebuildView = rebuildList;
-			choicesController.updateView = setSelected;
 			control.on('change', listItemSelected);
 
 			/* View value changed */
 			function listItemSelected() {
-				var index = control.val();
+				var index = parseInt(control.val());
 				scope.$apply(function () {
 					choicesController.viewChanged(index);
 				});
 			}
 
 			/* Set selected item */
-			function setSelected() {
-				control.val(choicesController.selected &&
-					choicesController.selected.index);
+			function selectionChanged(item) {
+				control.val(item && item.index);
 			}
 
 			/* ng jqLite does not support appending multiple elements */
@@ -53,12 +54,11 @@
 			}
 
 			/* Rebuild list contents */
-			function rebuildList() {
-				var choices = choicesController.choices;
+			function choicesChanged(items, grouped) {
 				control.empty();
-				appendMany(control, choices.grouped ?
-					createGroups(_(choices.items).groupBy('group')) :
-					createOptions(choices.items));
+				appendMany(control, grouped ?
+					createGroups(_(items).groupBy('group')) :
+					createOptions(items));
 			}
 
 			/* Create option groups */

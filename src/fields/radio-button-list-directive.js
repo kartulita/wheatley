@@ -23,17 +23,18 @@
 			link: link
 		};
 
-		function compile(element) {
+		function compile() {
 			return link;
 		}
 		
 		function link(scope, element, attrs, choicesController) {
+			/* Choice controller */
+			choicesController.onSelectionChanged = selectionChanged;
+			choicesController.onChoicesChanged = choicesChanged;
+
 			/* DOM */
 			var thisGroup = 'field-radio-button-list-' + groupIndex++;
 			var buttons = [];
-			/* Choice controller */
-			choicesController.rebuildView = rebuildList;
-			choicesController.updateView = setSelection;
 
 			return;
 
@@ -50,11 +51,11 @@
 			}
 
 			/* Set selected item */
-			function setSelection() {
-				var button = choicesController.selected &&
+			function selectionChanged(item) {
+				var button = item &&
 					_(buttons)
 						.find(function (el) {
-							return parseInt(el.value) === choicesController.selected.index;
+							return parseInt(el.value) === item.index;
 						});
 				if (button) {
 					button.checked = true;
@@ -73,15 +74,14 @@
 			}
 
 			/* Rebuild list contents */
-			function rebuildList() {
-				var choices = choicesController.choices;
+			function choicesChanged(items, grouped) {
 				element
 					.empty()
 					.append(elements.dummy.clone());
 				buttons = [];
-				appendMany(element, choices.grouped ?
-					createGroups(_(choices.items).groupBy('group')) :
-					createOptions(choices.items));
+				appendMany(element, grouped ?
+					createGroups(_(items).groupBy('group')) :
+					createOptions(items));
 			}
 
 			/* Create option groups */
