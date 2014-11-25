@@ -31,6 +31,8 @@
 		"toastr": "~2.0.2",
 		"mocha": "~2.0.1",
 		"chai": "~1.10.0",
-		"jquery": "~1.11.1"
+		"jquery": "latest",
+		"jquery-mobile-bower": "latest",
+		"components-font-awesome": "*"
 	}
 }
