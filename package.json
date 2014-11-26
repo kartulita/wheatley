@@ -1,22 +1,30 @@
 {
   "name": "wheatley",
   "version": "1.0.0",
-  "description": "ERR modules",
+  "description": "Kartulita - Project Wheatley (ERR) modules",
   "main": "library",
   "directories": {
     "doc": "doc"
   },
-  "dependencies": {
-    "angular-jsdoc": "^0.1.1",
-    "http-server": "^0.7.3",
+  "devDependencies": {
+
+    "gulp": "^3.8.10",
+	"gulp-watch": "^2.0.0",
+	"gulp-ng-annotate": "^0.3.6",
+	"gulp-uglify": "^1.0.1",
+	"gulp-jsdoc": "^0.1.4",
+
+    "bower": "^1.3.12",
+
     "jsdoc": "^3.3.0-alpha10",
-    "ng-annotate": "^0.11.0",
+    "angular-jsdoc": "^0.1.1",
     "uglify-js": "^2.4.15",
-	"bower": "*"
+    "ng-annotate": "^0.11.0",
+
+    "http-server": "^0.7.3"
   },
-  "devDependencies": {},
   "scripts": {
-    "test": "make test-loop"
+    "test": "make test"
   },
   "author": "Mark K Cowan",
   "license": "Private, no derivatives, no distribution, no modifications"

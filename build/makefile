@@ -55,6 +55,8 @@ SHELL=bash
 
 .PHONY: all bundle modules docs clean serve deps tags syntax test test-loop stats ngdoc jsdoc
 
+default: bundle
+
 all: bundle modules docs tags
 	@true
 
@@ -64,7 +66,6 @@ bundle: $(BUNDLE)
 modules: $(MODULES)
 	@true
 
-# $(DOCS) $(DOCDIR)/index.html
 docs: jsdoc
 	@true
 
