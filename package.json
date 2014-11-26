@@ -4,7 +4,7 @@
   "description": "ERR modules",
   "main": "library",
   "directories": {
-    "doc": "doc"
+    "doc": "out/doc"
   },
   "dependencies": {
     "angular-jsdoc": "^0.1.1",
@@ -16,7 +16,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "make test-loop"
+    "test": "make test"
   },
   "author": "Mark K Cowan",
   "license": "Private, no derivatives, no distribution, no modifications"

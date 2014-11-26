@@ -16,10 +16,7 @@
 		"*.swo",
 		"node_modules",
 		"bower_components",
-		"/tmp/",
 		"/out/",
-		"/doc/",
-		"/html/",
 		"**/.*"
 	],
 	"dependencies": {
