@@ -1,9 +1,5 @@
-*.swp
-*.swo
+.*.swp
+.*.swo
 node_modules
 bower_components
-/tmp/
 /out/
-/doc/
-/src/doc/doc-demos/
-/html/
