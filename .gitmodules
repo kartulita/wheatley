@@ -1,6 +1,6 @@
-[submodule "src/parsers"]
-	path = src/parsers
-	url = git@github.com:kartulita/parsers.git
+[submodule "src/dsl"]
+	path = src/dsl
+	url = git@github.com:kartulita/dsl.git
 [submodule "src/directive-proxy"]
 	path = src/directive-proxy
 	url = git@github.com:kartulita/directive-proxy.git
@@ -10,6 +10,9 @@
 [submodule "src/fields"]
 	path = src/fields
 	url = git@github.com:kartulita/fields.git
+[submodule "src/transformations"]
+	path = src/transformations
+	url = git@github.com:kartulita/transformations.git
 [submodule "build"]
 	path = build
 	url = git@github.com:kartulita/hacky-build-system.git
