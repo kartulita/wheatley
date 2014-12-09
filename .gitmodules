@@ -10,6 +10,9 @@
 [submodule "src/fields"]
 	path = src/fields
 	url = git@github.com:kartulita/fields.git
+[submodule "src/validators"]
+	path = src/validators
+	url = git@github.com:kartulita/validators.git
 [submodule "src/transformations"]
 	path = src/transformations
 	url = git@github.com:kartulita/transformations.git
