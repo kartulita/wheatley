@@ -19,3 +19,6 @@
 [submodule "build"]
 	path = build
 	url = git@github.com:kartulita/hacky-build-system.git
+[submodule "src/timeline"]
+	path = src/timeline
+	url = git@github.com:kartulita/timeline
