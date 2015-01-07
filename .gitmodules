@@ -22,3 +22,6 @@
 [submodule "src/timeline"]
 	path = src/timeline
 	url = git@github.com:kartulita/timeline
+[submodule "src/portal"]
+	path = src/portal
+	url = git@github.com:kartulita/portal.git
