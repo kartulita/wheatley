@@ -21,7 +21,10 @@
 	url = git@github.com:kartulita/hacky-build-system.git
 [submodule "src/timeline"]
 	path = src/timeline
-	url = git@github.com:kartulita/timeline
+	url = git@github.com:kartulita/timeline.git
 [submodule "src/portal"]
 	path = src/portal
 	url = git@github.com:kartulita/portal.git
+[submodule "src/portal-adapter"]
+	path = src/portal-adapter
+	url = git@github.com:err-public/portal-adapter.git
