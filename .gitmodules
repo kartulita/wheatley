@@ -28,3 +28,6 @@
 [submodule "src/portal-adapter"]
 	path = src/portal-adapter
 	url = git@github.com:err-public/portal-adapter.git
+[submodule "src/show-viewer"]
+	path = src/show-viewer
+	url = git@github.com:kartulita/show-viewer.git
