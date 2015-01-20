@@ -31,3 +31,6 @@
 [submodule "src/show-viewer"]
 	path = src/show-viewer
 	url = git@github.com:kartulita/show-viewer.git
+[submodule "src/schedule"]
+	path = src/schedule
+	url = git@github.com:kartulita/schedule.git
