@@ -37,3 +37,6 @@
 [submodule "src/err"]
 	path = src/err
 	url = git@github.com:err-public/adapters.git
+[submodule "src/language"]
+	path = src/language
+	url = git@github.com:kartulita/language.git
