@@ -1,0 +1,70 @@
+<!-- Timeline -->
+<div class="timeline"
+	ondragstart="return false;" ondrop="return false;"
+	ng-swipe-left="methods.next()" ng-swipe-right="methods.prev()">
+	<a href="javascript://" class="timeline-nav prev" ng-click="methods.prev()"></a>
+	<a href="javascript://" class="timeline-nav next" ng-click="methods.next()"></a>
+	<div class="timeline-goto" ng-class="{ open: view.isDatePickerOpening }">
+		<a href="javascript://" class="open-button"
+			ng-click="view.openDatePicker($event)"></a>
+		<input type="text" class="textbox" ng-model="view.datePickerValue"
+			datepicker-popup="dd.MM.yyyy" datepicker-mode="day"
+			is-open="view.isDatePickerOpen"
+			starting-day="1" init-date="new Date()" show-button-bar="true"
+			close-on-date-selection="true" datepicker-append-to-body="true"
+			current-text="{{ strings('today') }}" clear-text="{{ strings('clear') }}" close-text="{{ strings('close') }}"
+			disabled="disabled">
+	</div>
+	<!-- Scroll control -->
+	<div timeline-days class="timeline-days"
+		ng-style="{ transform: 'translateX(' + -(view.offset + view.origin) + 'px)' }">
+		<!-- day in model.days -->
+		<div timeline-day class="timeline-day">
+			<div class="timeline-day-title">
+				<span class="timeline-day-title-dims">
+					{{ day | timelineDate }}
+				</span>
+			</div>
+			<!-- items = day.items -->
+			<div timeline-items items-per-row="2" current="model.current"
+				class="timeline-items">
+				<!-- item in items -->
+				<div class="timeline-item-container"
+					ng-class="{ current: isCurrent(item) }"
+					ng-swipe-left="methods.prev()"
+					ng-swipe-right="methods.next()">
+					<!-- Item (no directive needed for this) -->
+					<a timeline-item class="timeline-item" href="javascript://"
+						ng-click="methods.openItem(item)">
+						<img ng-src="{{ item.thumbnail }}" alt="{{ item.title }}"
+							class="timeline-item-thumbnail">
+						<div class="media-icons timeline-item-states">
+							<!-- Playable -->
+							<div class="playable media-icon icomoon-play"
+								ng-if="item.playable && !isCurrent(item)"></div>
+							<!-- Currently playing media is... -->
+							<div class="now-playing"
+								ng-if="nowPlaying && isCurrent(item)">
+								<marquee ng-bind="nowPlaying"></marquee>
+							</div>
+							<!-- Show is now playing -->
+							<div class="current" ng-if="isCurrent(item)">
+								<span class="media-icon icomoon-play"></span>
+								{{ strings('onAir') }}
+							</div>
+						</div>
+						<!-- Hover-over info -->
+						<div class="timeline-item-header">
+							<div class="timeline-item-time">
+								{{ item.start | timelineTime }}
+							</div>
+							<div class="timeline-item-title">
+								{{ item.title }}
+							</div>
+						</div>
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

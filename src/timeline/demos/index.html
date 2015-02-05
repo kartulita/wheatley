@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Timeline demo</title>
+<base href="../">
+<meta charset="utf8">
+<link href="http://etv.err.ee/Content/less/theme/etv/bootstrap.less" rel="stylesheet">
+<!-- Dependencies -->
+<link rel="stylesheet" href="bower_components/fontawesome/css/font-awesome.css">
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="bower_components/jquery-ui/themes/smoothness/jquery-ui.css">
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/moment/min/moment-with-locales.min.js"></script>
+<script src="bower_components/underscore/underscore-min.js"></script>
+<script src="bower_components/angular/angular.min.js"></script>
+<script src="bower_components/angular-touch/angular-touch.min.js"></script>
+<script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+<!-- jQuery UI needed for slider controls in this demo -->
+<script src="bower_components/jquery-ui/jquery-ui.min.js"></script>
+<script src="bower_components/angular-ui-slider/src/slider.js"></script>
+<!-- Language -->
+<script src="../language/module.js"></script>
+<script src="../language/language-service.js"></script>
+<!-- Apis -->
+<script src="../err/module.js"></script>
+<script src="../err/apis.js"></script>
+<script src="../err/timeline-adapter.js"></script>
+<!-- Timeline -->
+<link rel="stylesheet/less" href="style.less" type="text/css">
+<script src="module.js"></script>
+<script src="timeline-template.html" type="text/ng-template"></script>
+<script src="timeline-locale.js"></script>
+<script src="timeline-service.js"></script>
+<script src="timeline-filters.js"></script>
+<script src="timeline-controller.js"></script>
+<script src="timeline-directive.js"></script>
+<script src="days-directive.js"></script>
+<script src="day-directive.js"></script>
+<script src="items-directive.js"></script>
+<!-- Demo -->
+<script>
+(function (angular, less) {
+	'use strict';
+
+	angular.module('demo', ['battlesnake.timeline', 'ui.slider', 'battlesnake.err'])
+		.controller('demoController', demoController);
+
+	function demoController($scope, $timeout, timelineAdapterFactory, scheduleApi) {
+		$scope.adapters = _(scheduleApi).map(function (api, name) {
+			return {
+				name: name,
+				timeline: timelineAdapterFactory(api)
+			};
+		});
+		$scope.model = {
+			title: 'Timeline demo',
+			adapter: null,
+			nowPlaying: ''
+		};
+		$scope.less = {
+			itemSize: 18,
+			itemSpacing: 1,
+			daySpacing: 1,
+			baseColor: '#ea297a',
+			backgroundColor: '#3b4257'
+		};
+		$scope.colors = ['#ea297a', '#3b97a4', '#f58537', '#f7931e', '#ba1e1e', '#3b4257', '#353e43'];
+		$scope.$watch('less', refreshLess, true);
+		$scope.model.adapter = $scope.adapters[0];
+		return;
+
+		function refreshLess() {
+			var vars = _($scope.less).chain()
+				.map(function (v, k) {
+					return [
+						'timeline-' + k.replace(/[A-Z]/g, function (c) { return '-' + c.toLowerCase(); }),
+						typeof v === 'number' ? v*8 + 'px' : v
+					];
+				})
+				.object()
+				.value();
+			if (less && less.modifyVars) {
+				less.modifyVars(vars);
+			} else {
+				$timeout(refreshLess, 100);
+			}
+		}
+	}
+
+})(window.angular, window.less);
+</script>
+<style>
+body {
+	font-family: sans-serif;
+	margin: 60px;
+}
+h1 {
+	margin-bottom: 40px;
+}
+.form {
+	margin: 20px auto 60px;
+	max-width: 600px;
+}
+.form>label {
+	display: block;
+	margin: 8px 0 16px;
+}
+.color-pad {
+	width: 64px;
+	height: 64px;
+	margin: 4px;
+	display: inline-block;
+	vertical-align: top;
+	transition: transform 200ms ease;
+}
+.color-pad.selected {
+	transform: rotate(95deg);
+}
+</style>
+</head>
+<body ng-app="demo" ng-controller="demoController">
+	<h1 ng-bind="model.title"></h1>
+	<select ng-model="model.adapter" ng-options="adapter as adapter.name for adapter in adapters"></select>
+	<!-- Here it is! -->
+	<div timeline="model.adapter.timeline" class="kartulita" now-playing="model.nowPlaying"></div>
+	<!-- That's all there is to it!  Here are the slider controls            -->
+	<div class="form">
+		<label>Set "now playing"
+			<input type="text" class="form-control" ng-model="model.nowPlaying">
+		</label>
+		<label>Tile size
+			<div min="8" max="40" ng-model="less.itemSize" ui-slider></div>
+		</label>
+		<label>Tile spacing
+			<div min="1" max="4" ng-model="less.itemSpacing" ui-slider></div>
+		</label>
+		<label>Day spacing
+			<div min="0" max="4" ng-model="less.daySpacing" ui-slider></div>
+		</label>
+		<label>Background colour<br/>
+			<div class="color-pad" ng-repeat="color in colors" ng-style="{ 'background-color': color }" ng-click="less.backgroundColor = color" ng-class="{ selected: (less.backgroundColor === color) }"></div>
+		</label>
+		<label>Base colour<br/>
+			<div class="color-pad" ng-repeat="color in colors" ng-style="{ 'background-color': color }" ng-click="less.baseColor = color" ng-class="{ selected: (less.baseColor === color) }"></div>
+		</label>
+	</div>
+	<p style="margin: 2em auto 1em; max-width: 600px; line-height: 1.7em;">
+		<strong>NOTE:</strong> Since we are using the err.ee api from outside the
+		err.ee domain, your browser will block the XHRs due to CORS. To disable
+		CORS in chrome or chromium, launch it with the
+		<b>--disable-web-security</b> command-line parameter. The demos will not
+		work otherwise. There is no reliable way to disable CORS in Firefox.
+	</p>
+</body>
+<script src="bower_components/less/dist/less.min.js"></script>
+</html>
