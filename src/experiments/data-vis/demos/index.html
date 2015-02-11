@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Data visualisation demo</title>
+<base href="../">
+<meta charset="utf8">
+<!-- Dependencies -->
+<script src="bower_components/underscore/underscore-min.js"></script>
+<script src="bower_components/angular/angular.min.js"></script>
+<script src="bower_components/d3/d3.min.js"></script>
+<!-- Timeline -->
+<link rel="stylesheet/less" href="style.less" type="text/css">
+<script src="module.js"></script>
+<script src="common.js"></script>
+<script src="bubble-chart-template.html" type="text/ng-template"></script>
+<script src="bubble-chart.js"></script>
+<!-- Demo -->
+<script>
+(function (angular, _) {
+	'use strict';
+
+	angular.module('demo', ['battlesnake.data-vis'])
+		.service('worldBankPublicDataService', worldBankPublicDataService)
+		.controller('demoController', demoController);
+
+	function worldBankPublicDataService($http) {
+		return {
+			getIndicator: getIndicator
+		};
+
+		function getIndicator(indicator, country, params) {
+			params = _({})
+				.defaults(params, {
+					format: 'json',
+					per_page: 10000
+				});
+			var req = {
+				method: 'GET',
+				url: 'http://api.worldbank.org/countries/' + country + '/indicators/' + indicator,
+				params: params
+			};
+			return $http(req)
+				.then(function (res) {
+					return _(res.data[1])
+						.filter(function (item) {
+							return item.country && item.country.value &&
+								item.value !== undefined && item.value !== null &&
+								item.date !== undefined && item.date !== null;
+						})
+						.map(function (item) {
+							return {
+								country: item.country.value,
+								value: item.value,
+								date: item.date
+							};
+						});
+				});
+		}
+	}
+
+	function demoController($scope, worldBankPublicDataService) {
+		$scope.model = {
+			title: 'Data visualisation',
+			data: null,
+			country: null,
+			countries: []
+		};
+		$scope.view = {
+			data: null,
+			axes: null
+		};
+		$scope.$watch('model.country', refreshView);
+
+		worldBankPublicDataService.getIndicator('6.0.GDPpc_constant', 'all', { date: '1991:2015' })
+			.then(loadData)
+			.then(refreshView);
+
+		return
+
+		function refreshView() {
+			var country = $scope.model.country;
+			var data = $scope.model.data;
+			$scope.view.data = country ? _(data).where({ country: country }) : [];
+		}
+		
+		function loadData(data) {
+			$scope.model.countries = _(data).chain().pluck('country').uniq().value();
+			$scope.model.data = _(data)
+				.map(function (item) {
+					return {
+						country: item.country,
+						x: item.date,
+						y: item.value,
+						r: 3,
+						color: 'black'
+					};
+				});
+			$scope.view.axes = {
+				x: {
+					min: Math.min.apply(Math, _($scope.model.data).pluck('x')),
+					max: Math.max.apply(Math, _($scope.model.data).pluck('x'))
+				},
+				y: {
+					min: Math.min.apply(Math, _($scope.model.data).pluck('y')),
+					max: Math.max.apply(Math, _($scope.model.data).pluck('y'))
+				}
+			};
+		}
+	}
+
+})(window.angular, window._);
+</script>
+<style>
+body {
+	font-family: sans-serif;
+	margin: 60px;
+}
+h1 {
+	margin-bottom: 40px;
+}
+.chart {
+	position: relative;
+	border: 1px solid black;
+}
+.chart>svg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+}
+.chart {
+	width: 600px;
+	height: 400px;
+}
+.countries {
+	max-width: 600px;
+	border: 1px solid black;
+	padding: 4px 2px;
+	display: flex;
+	flex-flow: row wrap;
+}
+.country {
+	line-height: 1;
+	margin: 2px 4px;
+	padding: 5px 10px;
+	border: 1px solid silver;
+	color: black;
+	text-decoration: none;
+}
+.country:hover,
+.country.selected {
+	border-color: blue;
+	color: blue;
+}
+</style>
+</head>
+<body ng-app="demo" ng-controller="demoController">
+	<h1 ng-bind="model.title"></h1>
+	<div class="countries">
+		<a href="javascript://" class="country"
+			ng-repeat="country in model.countries"
+			ng-mouseover="model.country=country"
+			ng-class="{ selected: country==model.country }">
+			{{ country }}
+		</a>
+	</div>
+	<h2 ng-bind="model.country"></h2>
+	<div bubble-chart class="chart" data="view.data" axes="view.axes">
+	</div>
+</body>
+</html>

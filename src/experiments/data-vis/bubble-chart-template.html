@@ -1,0 +1,8 @@
+<svg
+	svg-view-box="{{model.axes.x.min}} {{model.axes.y.min}} {{model.axes.x.max}} {{model.axes.y.max}}"
+	class="chart bubble"
+	ng-if="model.axes && model.data"
+	width="100%"
+	height="100%">
+	<circle ng-repeat="point in model.data" ng-attr-cx="{{ point.x }}" ng-attr-cy="{{ point.y }}" ng-attr-r="{{ point.r }}" ng-attr-fill="{{ point.color }}"/>
+</svg>
