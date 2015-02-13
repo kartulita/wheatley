@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+<meta chartset="utf8">
+<title>Bar chart demo</title>
+<base href="../">
+<link rel="stylesheet/less" type="text/css" href="style.less">
+<script src="bower_components/angular/angular.min.js"></script>
+<script src="bower_components/less/dist/less.min.js"></script>
+<script src="module.js"></script>
+<script src="bar-chart.js"></script>
+<script src="bar-chart-template.html" type="text/ng-template"></script>
+<script>
+(function (angular) {
+	'use strict';
+
+	angular.module('demo', ['battlesnake.data-vis'])
+		.controller('demoController', demoController);
+
+	function demoController($scope, $timeout) {
+		var scope = $scope;
+		scope.data = {
+			categories: [
+				{
+					percent: 20,
+					title: 'Red',
+					labelStyle: 'color: maroon',
+					barStyle: 'background: maroon'
+				},
+				{
+					percent: 50,
+					title: 'Yellow',
+					labelStyle: 'color: olive',
+					barStyle: 'background: olive'
+				},
+				{
+					percent: 70,
+					title: 'Green',
+					labelStyle: 'color: green',
+					barStyle: 'background: green'
+				},
+				{
+					percent: 80,
+					title: 'Blue',
+					labelStyle: 'color: blue',
+					barStyle: 'background: blue'
+				}
+			]
+		};
+		scope.axes = {
+			x: {
+				labels: [
+					{ caption: '20%' },
+					{ caption: '40%' },
+					{ caption: '60%' },
+					{ caption: '80%' },
+					{ caption: '100%' }
+				]
+			}
+		};
+		scope.loading = true;
+		$timeout(function () { scope.loading = false; }, 1000);
+	}
+
+})(window.angular);
+</script>
+<style>
+	.loading .bar.chart .bar {
+		transform: scaleX(0);
+	}
+	.bar.chart .bar {
+		transition: transform 300ms cubic-bezier(1, 2, .5, 0.5);
+		transform: scaleX(1);
+		transform-origin: left;
+	}
+</style>
+</head>
+<body ng-app="demo">
+	<bar-chart data="data" axes="axes" ng-controller="demoController" style="width: 800px; border: 1px dotted blue; display: inline-block; position: relative;" ng-class="{ loading: loading }"></bar-chart>
+</body>
+</html>

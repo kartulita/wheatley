@@ -1,0 +1,167 @@
+.chart {
+	background: white;
+	font-family: sans-serif;
+	font-size: 14px;
+	line-height: 16px;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+
+	&, * {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+	}
+
+	ul,
+	ol,
+	li {
+		display: block;
+		margin: 0;
+		padding: 0;
+		text-indent: 0;
+		list-style: none;
+	}
+
+	.title {
+		font-size: 18px;
+		line-height: 22px;
+		font-weight: bold;
+	}
+
+	.axis {
+		.title {
+			font-size: 16px;
+			line-height: 16px;
+		}
+
+		.label,
+		.corner {
+			font-size: 14px;
+			line-height: 14px;
+		}
+
+		&.x {
+			.title {
+			}
+
+			.label {
+			}
+		}
+
+		&.y {
+			.title {
+			}
+
+			.label {
+			}
+		}
+	}
+
+	.layers {
+		position: relative;
+		&>.layer {
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+		}
+	}
+
+	.plot {
+		.bar {
+		}
+
+		.label {
+		}
+	}
+
+	@bar-chart-category-width: 200px;
+
+	&.bar {
+		.grid .major {
+			border-right: 1px dashed silver;
+			width: 100%;
+		}
+
+		.axis.x .label {
+			border-right: 1px solid black;
+		}
+
+		.axis .label {
+			white-space: nowrap;
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
+
+		.axis.x,
+		.grid.layer {
+			display: flex;
+			flex-flow: row nowrap;
+			align-items: baseline;
+			justify-content: space-between;
+			align-content: stretch;
+		}
+
+		.grid .major {
+			height: 100%;
+		}
+
+		.axis.x {
+			border-bottom: 1px solid black;
+		}
+
+		.corner,
+		.axis.y {
+			width: @bar-chart-category-width;
+			border-right: 1px solid black;
+		}
+
+		.axis.y,
+		.data.layer {
+			display: flex;
+			flex-flow: column nowrap;
+		}
+
+		.axis.y {
+			align-items: center;
+		}
+
+		.data.layer {
+			align-items: flex-start;
+		}
+
+		.axis.y .label {
+			padding-top: 2px;
+			height: 20px;
+		}
+
+		.data.layer .bar {
+			display: inline-block;
+			margin: 6px 0 8px;
+			height: 6px;
+			border-top-right-radius: 100% 2px;
+			border-bottom-right-radius: 100% 2px;
+		}
+
+		.bar {
+		}
+
+		.row {
+			display: flex;
+			align-content: stretch;
+			flex-flow: row nowrap;
+		}
+
+		.row>* {
+			flex-grow: 1;
+		}
+
+		.row>.fixed-col {
+			flex-grow: 0;
+			flex-shrink: 0;
+		}
+	}
+}

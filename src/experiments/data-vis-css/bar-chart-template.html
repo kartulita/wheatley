@@ -1,0 +1,27 @@
+<div class="bar chart">
+	<header>
+		<h2 class="title" ng-bind="title"></h2>
+	</header>
+	<ol class="axis x">
+		<li class="corner label">&nbsp;</li>
+		<li class="label" ng-repeat="label in axes.x.labels" ng-bind="label.caption" ng-class="label.class" style="{{ label.style }}"></li>
+	</ol>
+	<div class="row">
+		<div class="fixed-col">
+			<ul class="axis y">
+				<li class="label" ng-repeat="category in data.categories" ng-bind="category.title" ng-class="category.class" style="{{ category.labelStyle }}"></li>
+			</ul>
+		</div>
+		<div class="plot layers">
+			<div class="grid layer">
+				<div class="major" ng-repeat="label in axes.x.labels" class="vertical grid">&nbsp;</div>
+			</div>
+			<ul class="data layer">
+				<li class="bar" ng-repeat="category in data.categories" ng-class="category.class" style="{{ category.barStyle }}" ng-style="{ width: category.percent + '%' }">
+					&nbsp;
+					<span class="label" ng-bind="category.label" ng-if="category.label"></span>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>
