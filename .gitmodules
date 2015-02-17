@@ -40,3 +40,6 @@
 [submodule "src/language"]
 	path = src/language
 	url = git@github.com:kartulita/language.git
+[submodule "src/date-picker"]
+	path = src/date-picker
+	url = git@github.com:kartulita/jqui-date-picker.git
