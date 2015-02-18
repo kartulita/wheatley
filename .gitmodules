@@ -43,3 +43,6 @@
 [submodule "src/date-picker"]
 	path = src/date-picker
 	url = git@github.com:kartulita/jqui-date-picker.git
+[submodule "src/elections"]
+	path = src/elections
+	url = git@github.com:err-public/elections.git
