@@ -46,3 +46,6 @@
 [submodule "src/elections"]
 	path = src/elections
 	url = git@github.com:err-public/elections.git
+[submodule "src/eggs"]
+	path = src/eggs
+	url = git@github.com:err-public/eggs.git
