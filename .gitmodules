@@ -49,3 +49,6 @@
 [submodule "src/eggs"]
 	path = src/eggs
 	url = git@github.com:err-public/eggs.git
+[submodule "src/ajax-proxy"]
+	path = src/ajax-proxy
+	url = git@github.com:kartulita/ajax-proxy.git
