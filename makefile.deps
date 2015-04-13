@@ -9,7 +9,7 @@ modules := dsl directive-proxy transformations validators $(modules)
 endif
 
 ifneq ($(filter $(modules),schedule),)
-modules := timeline show-viewer $(modules)
+modules := now-playing timeline show-viewer $(modules)
 endif
 
 ifneq ($(filter $(modules),show-viewer),)

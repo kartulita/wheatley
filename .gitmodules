@@ -52,3 +52,9 @@
 [submodule "src/ajax-proxy"]
 	path = src/ajax-proxy
 	url = git@github.com:kartulita/ajax-proxy.git
+[submodule "src/--force"]
+	path = src/--force
+	url = git@github.com:kartulita/now-playing
+[submodule "src/now-playing"]
+	path = src/now-playing
+	url = git@github.com:kartulita/now-playing
