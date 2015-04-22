@@ -36,7 +36,7 @@
 	url = git@github.com:kartulita/schedule.git
 [submodule "src/err"]
 	path = src/err
-	url = git@github.com:err-public/adapters.git
+	url = git@git.kuckian.co.uk:err-adapters
 [submodule "src/language"]
 	path = src/language
 	url = git@github.com:kartulita/language.git
@@ -52,9 +52,6 @@
 [submodule "src/ajax-proxy"]
 	path = src/ajax-proxy
 	url = git@github.com:kartulita/ajax-proxy.git
-[submodule "src/--force"]
-	path = src/--force
-	url = git@github.com:kartulita/now-playing
 [submodule "src/now-playing"]
 	path = src/now-playing
 	url = git@github.com:kartulita/now-playing
